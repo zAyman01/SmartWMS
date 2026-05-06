@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.warehousewms.ui.RegisterFrame">
+  <grid id="27dc6" binding="rootPanel" default-binding="true" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+    <margin top="0" left="0" bottom="0" right="0"/>
+    <constraints>
+      <xy x="20" y="20" width="500" height="700"/>
+    </constraints>
+    <properties>
+      <preferredSize width="500" height="700"/>
+      <minimumSize width="450" height="650"/>
+    </properties>
+    <border type="none"/>
+    <children>
+      <!-- Main card-like panel -->
+      <grid id="registerMainPanel" binding="mainPanel" layout-manager="GridLayoutManager" row-count="15" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="10">
+        <margin top="40" left="50" bottom="40" right="50"/>
+        <constraints>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <!-- App icon placeholder -->
+          <component id="registerIcon" class="javax.swing.JLabel" binding="appIconLabel">
+            <constraints>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <font size="36"/>
+              <horizontalAlignment value="0"/>
+              <text value="📦"/>
+              <toolTipText value="Smart WMS"/>
+            </properties>
+          </component>
+          <!-- Title -->
+          <component id="registerTitle" class="javax.swing.JLabel" binding="titleLabel">
+            <constraints>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <font size="28" style="1"/>
+              <horizontalAlignment value="0"/>
+              <text value="Smart WMS"/>
+            </properties>
+          </component>
+          <!-- Subtitle -->
+          <component id="registerSubtitle" class="javax.swing.JLabel" binding="subtitleLabel">
+            <constraints>
+              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <font size="14" style="0"/>
+              <foreground color="-6710887"/>
+              <horizontalAlignment value="0"/>
+              <text value="Create a new account"/>
+            </properties>
+          </component>
+          <!-- Spacer -->
+          <vspacer id="registerSpacer">
+            <constraints>
+              <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false">
+                <preferred-size width="-1" height="5"/>
+              </grid>
+            </constraints>
+          </vspacer>
+          <!-- Full Name -->
+          <component id="registerFullNameLabel" class="javax.swing.JLabel" binding="fullNameLabel">
+            <constraints>
+              <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text value="Full Name"/>
+            </properties>
+          </component>
+          <component id="registerFullNameField" class="javax.swing.JTextField" binding="fullNameField">
+            <constraints>
+              <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
+                <preferred-size width="300" height="36"/>
+                <minimum-size width="200" height="36"/>
+              </grid>
+            </constraints>
+            <properties>
+              <toolTipText value="Enter your full name"/>
+            </properties>
+          </component>
+          <!-- Username -->
+          <component id="registerUsernameLabel" class="javax.swing.JLabel" binding="usernameLabel">
+            <constraints>
+              <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text value="Username"/>
+            </properties>
+          </component>
+          <component id="registerUsernameField" class="javax.swing.JTextField" binding="usernameField">
+            <constraints>
+              <grid row="7" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
+                <preferred-size width="300" height="36"/>
+                <minimum-size width="200" height="36"/>
+              </grid>
+            </constraints>
+            <properties>
+              <toolTipText value="Choose a username"/>
+            </properties>
+          </component>
+          <!-- Password -->
+          <component id="registerPasswordLabel" class="javax.swing.JLabel" binding="passwordLabel">
+            <constraints>
+              <grid row="8" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text value="Password"/>
+            </properties>
+          </component>
+          <component id="registerPasswordField" class="javax.swing.JPasswordField" binding="passwordField">
+            <constraints>
+              <grid row="9" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
+                <preferred-size width="300" height="36"/>
+                <minimum-size width="200" height="36"/>
+              </grid>
+            </constraints>
+            <properties>
+              <toolTipText value="Create a password"/>
+            </properties>
+          </component>
+          <!-- Confirm Password -->
+          <component id="registerConfirmPasswordLabel" class="javax.swing.JLabel" binding="confirmPasswordLabel">
+            <constraints>
+              <grid row="10" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text value="Confirm Password"/>
+            </properties>
+          </component>
+          <component id="registerConfirmPasswordField" class="javax.swing.JPasswordField" binding="confirmPasswordField">
+            <constraints>
+              <grid row="11" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
+                <preferred-size width="300" height="36"/>
+                <minimum-size width="200" height="36"/>
+              </grid>
+            </constraints>
+            <properties>
+              <toolTipText value="Repeat your password"/>
+            </properties>
+          </component>
+          <!-- Register button -->
+          <component id="registerButton" class="javax.swing.JButton" binding="registerButton">
+            <constraints>
+              <grid row="12" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false">
+                <preferred-size width="300" height="40"/>
+              </grid>
+            </constraints>
+            <properties>
+              <text value="Create account"/>
+            </properties>
+          </component>
+          <!-- Status / error message -->
+          <component id="registerStatusLabel" class="javax.swing.JLabel" binding="statusLabel">
+            <constraints>
+              <grid row="13" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <font size="12" style="0"/>
+              <foreground color="-65536"/>
+              <horizontalAlignment value="0"/>
+              <text value=""/>
+            </properties>
+          </component>
+          <!-- Back to sign in link -->
+          <component id="backToLoginLink" class="javax.swing.JLabel" binding="backToLoginLabel">
+            <constraints>
+              <grid row="14" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <cursor type="12"/>
+              <foreground color="-16728065"/>
+              <horizontalAlignment value="0"/>
+              <text value="Already have an account? Sign in"/>
+            </properties>
+          </component>
+        </children>
+      </grid>
+    </children>
+  </grid>
+</form>
