@@ -9,7 +9,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HexFormat;
+import java.util.List;
 
 public class UserRepository {
     private final DataSource dataSource;
@@ -88,6 +90,53 @@ public class UserRepository {
             ps.setString(2, user.getRole());
             ps.setInt(3, user.getUserId());
             ps.executeUpdate();
+        }
+    }
+
+    public List<User> listUsers() throws SQLException {
+        String sql = "SELECT UserId, Username, FullName, Role FROM Users ORDER BY Username";
+        List<User> users = new ArrayList<>();
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                User user = new User();
+                user.setUserId(rs.getInt("UserId"));
+                user.setUsername(rs.getString("Username"));
+                user.setFullName(rs.getString("FullName"));
+                user.setRole(rs.getString("Role"));
+                users.add(user);
+            }
+        }
+        return users;
+    }
+
+    public boolean updatePasswordByUsername(String username, String newPassword) throws SQLException {
+        String sql = "UPDATE Users SET PasswordHash = ? WHERE Username = ?";
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, hashPassword(newPassword));
+            ps.setString(2, username);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
+    public boolean updatePasswordByUserId(int userId, String newPassword) throws SQLException {
+        String sql = "UPDATE Users SET PasswordHash = ? WHERE UserId = ?";
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, hashPassword(newPassword));
+            ps.setInt(2, userId);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
+    public boolean deleteUser(int userId) throws SQLException {
+        String sql = "DELETE FROM Users WHERE UserId = ?";
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            return ps.executeUpdate() > 0;
         }
     }
 

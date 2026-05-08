@@ -3,6 +3,7 @@ package com.warehousewms.ui;
 import com.warehousewms.config.DatabaseManager;
 import com.warehousewms.service.AuthService;
 import com.warehousewms.util.CredentialStorage;
+import com.warehousewms.util.SessionContext;
 
 import javax.swing.*;
 import java.awt.*;
@@ -54,6 +55,7 @@ public class LoginFrame extends JFrame {
             new SwingWorker<Boolean, Void>() {
                 private String errorMessage;
                 private String fullName;
+                private String role;
 
                 @Override
                 protected Boolean doInBackground() {
@@ -68,6 +70,8 @@ public class LoginFrame extends JFrame {
                             CredentialStorage.clearCredentials();
                         }
                         fullName = user.getFullName();
+                        role = user.getRole();
+                        SessionContext.setCurrentUser(user);
                         return true;
                     } catch (Exception ex) {
                         errorMessage = ex.getMessage();
@@ -81,6 +85,13 @@ public class LoginFrame extends JFrame {
                         boolean ok = get();
                         if (ok) {
                             statusLabel.setText("Login successful! Welcome, " + fullName + ".");
+                            if ("Admin".equalsIgnoreCase(role)) {
+                                SwingUtilities.invokeLater(() -> {
+                                    UserManagementFrame users = new UserManagementFrame();
+                                    users.setVisible(true);
+                                });
+                                dispose();
+                            }
                         } else if (errorMessage != null) {
                             statusLabel.setText("Login failed: " + errorMessage);
                         } else {
@@ -95,7 +106,6 @@ public class LoginFrame extends JFrame {
             }.execute();
         });
 
-        // Placeholder action for Create account button
         createAccountButton.addActionListener(e -> {
             dispose();
             RegisterFrame registerFrame = new RegisterFrame();
@@ -117,7 +127,9 @@ public class LoginFrame extends JFrame {
 
             @Override
             public void mouseClicked(java.awt.event.MouseEvent e) {
-                JOptionPane.showMessageDialog(LoginFrame.this, "Password reset not implemented yet.");
+                dispose();
+                ForgetPasswordFrame forgetPasswordFrame = new ForgetPasswordFrame();
+                forgetPasswordFrame.setVisible(true);
             }
         });
     }

@@ -15,13 +15,13 @@
 - [x] Add DB smoke test runner and document usage
 - [x] Add automated tests for connection + schema + fallback
 
-### Phase 3 — Auth and user management (IN PROGRESS)
+### Phase 3 — Auth and user management (DONE)
 - [x] Login UI + validation flow
 - [x] Registration UI + validation flow
 - [x] Password hashing
-- [ ] User CRUD UI
-- [ ] Password reset flow
-- [ ] Role-based access control
+- [x] User CRUD UI
+- [x] Password reset flow
+- [x] Role-based access control
 
 ### Phase 4 — Master data (PLANNED)
 - [ ] Products CRUD
