@@ -23,16 +23,16 @@
 - [x] Password reset flow
 - [x] Role-based access control
 
-### Phase 4 — Master data (PLANNED)
-- [ ] Products CRUD
-- [ ] Suppliers CRUD
-- [ ] Customers CRUD
-- [ ] Bins/location hierarchy UI
+### Phase 4 — Master data (DONE)
+- [x] Products CRUD
+- [x] Suppliers CRUD
+- [x] Customers CRUD
+- [x] Bins/location hierarchy UI
 
-### Phase 5 — Inventory operations (PLANNED)
-- [ ] Receiving (PO -> receipt -> inventory)
-- [ ] Picking/packing/shipping
-- [ ] Stock adjustments and transfers
+### Phase 5 — Inventory operations (DONE)
+- [x] Receiving (PO -> receipt -> inventory)
+- [x] Picking/packing/shipping
+- [x] Stock adjustments and transfers
 
 ### Phase 6 — Reporting & dashboards (PLANNED)
 - [ ] KPI dashboard (JFreeChart)

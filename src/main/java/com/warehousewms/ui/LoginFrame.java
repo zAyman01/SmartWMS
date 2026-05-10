@@ -1,7 +1,8 @@
 package com.warehousewms.ui;
 
 import com.warehousewms.config.DatabaseManager;
-import com.warehousewms.service.AuthService;
+import com.warehousewms.service.LoginResult;
+import com.warehousewms.service.LoginService;
 import com.warehousewms.util.CredentialStorage;
 import com.warehousewms.util.SessionContext;
 
@@ -24,87 +25,33 @@ public class LoginFrame extends JFrame {
     private JButton createAccountButton;
     private JLabel statusLabel;
 
-    private final java.awt.Color normalColor;
-    private final java.awt.Color hoverColor = new java.awt.Color(0, 102, 204);  // darker blue
+    private final LoginService loginService;
+    private final Color normalColor;
+    private final Color hoverColor = ThemeConfig.ACCENT;
 
     public LoginFrame() {
+        this(new LoginService(new DatabaseManager().getDataSourceWithFallback()));
+    }
+
+    public LoginFrame(LoginService loginService) {
+        this.loginService = loginService;
+
         setContentPane(rootPanel);
         setSize(650, 650);
-        setMinimumSize(new java.awt.Dimension(450, 600));
+        setMinimumSize(new Dimension(450, 600));
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setTitle("Smart WMS – Login");
+        setTitle("Smart WMS \u2013 Login");
+
+        // Apply theme colors to form components
+        applyTheme();
 
         normalColor = forgotPasswordLabel.getForeground();
         loadRememberedCredentials();
 
         getRootPane().setDefaultButton(signInButton);
 
-        signInButton.addActionListener(e -> {
-            String username = usernameField.getText().trim();
-            String password = new String(passwordField.getPassword());
-
-            if (username.isEmpty() || password.isEmpty()) {
-                statusLabel.setText("Please enter both username and password.");
-                return;
-            }
-
-            signInButton.setEnabled(false);
-            statusLabel.setText("Signing in...");
-
-            new SwingWorker<Boolean, Void>() {
-                private String errorMessage;
-                private String fullName;
-                private String role;
-
-                @Override
-                protected Boolean doInBackground() {
-                    try (AuthService authService = new AuthService(new DatabaseManager().getDataSourceWithFallback())) {
-                        var user = authService.login(username, password);
-                        if (user == null) {
-                            return false;
-                        }
-                        if (rememberMeCheckBox.isSelected()) {
-                            CredentialStorage.saveCredentials(username, password);
-                        } else {
-                            CredentialStorage.clearCredentials();
-                        }
-                        fullName = user.getFullName();
-                        role = user.getRole();
-                        SessionContext.setCurrentUser(user);
-                        return true;
-                    } catch (Exception ex) {
-                        errorMessage = ex.getMessage();
-                        return false;
-                    }
-                }
-
-                @Override
-                protected void done() {
-                    try {
-                        boolean ok = get();
-                        if (ok) {
-                            statusLabel.setText("Login successful! Welcome, " + fullName + ".");
-                            if ("Admin".equalsIgnoreCase(role)) {
-                                SwingUtilities.invokeLater(() -> {
-                                    UserManagementFrame users = new UserManagementFrame();
-                                    users.setVisible(true);
-                                });
-                                dispose();
-                            }
-                        } else if (errorMessage != null) {
-                            statusLabel.setText("Login failed: " + errorMessage);
-                        } else {
-                            statusLabel.setText("Invalid username or password.");
-                        }
-                    } catch (Exception ex) {
-                        statusLabel.setText("Login failed: " + ex.getMessage());
-                    } finally {
-                        signInButton.setEnabled(true);
-                    }
-                }
-            }.execute();
-        });
+        signInButton.addActionListener(e -> performLogin());
 
         createAccountButton.addActionListener(e -> {
             dispose();
@@ -134,6 +81,83 @@ public class LoginFrame extends JFrame {
         });
     }
 
+    private void applyTheme() {
+        // Style the sign in button as an accent button
+        signInButton.setBackground(ThemeConfig.ACCENT);
+        signInButton.setForeground(Color.WHITE);
+        signInButton.setFont(ThemeConfig.FONT_BUTTON);
+        signInButton.setFocusPainted(false);
+        signInButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        signInButton.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override public void mouseEntered(java.awt.event.MouseEvent e) {
+                if (signInButton.isEnabled()) signInButton.setBackground(ThemeConfig.ACCENT_HOVER);
+            }
+            @Override public void mouseExited(java.awt.event.MouseEvent e) {
+                signInButton.setBackground(ThemeConfig.ACCENT);
+            }
+        });
+
+        // Style the create account button
+        createAccountButton.setBackground(ThemeConfig.BG_CARD);
+        createAccountButton.setForeground(ThemeConfig.TEXT_PRIMARY);
+        createAccountButton.setFont(ThemeConfig.FONT_BUTTON);
+        createAccountButton.setFocusPainted(false);
+        createAccountButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
+        // Title styling
+        titleLabel.setForeground(ThemeConfig.ACCENT);
+
+        // Forgot password link
+        forgotPasswordLabel.setForeground(ThemeConfig.ACCENT);
+    }
+
+    private void performLogin() {
+        String username = usernameField.getText().trim();
+        String password = new String(passwordField.getPassword());
+
+        if (username.isEmpty() || password.isEmpty()) {
+            statusLabel.setText("Please enter both username and password.");
+            return;
+        }
+
+        signInButton.setEnabled(false);
+        statusLabel.setText("Signing in...");
+        statusLabel.setForeground(ThemeConfig.TEXT_MUTED);
+
+        boolean rememberMe = rememberMeCheckBox.isSelected();
+
+        new SwingWorker<LoginResult, Void>() {
+            @Override
+            protected LoginResult doInBackground() {
+                return loginService.login(username, password, rememberMe);
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    LoginResult result = get();
+                    if (result.isSuccess()) {
+                        statusLabel.setForeground(ThemeConfig.SUCCESS);
+                        statusLabel.setText("Login successful! Welcome, " + result.getUser().getFullName() + ".");
+                        SwingUtilities.invokeLater(() -> {
+                            DashboardFrame dashboard = new DashboardFrame();
+                            dashboard.setVisible(true);
+                        });
+                        dispose();
+                    } else {
+                        statusLabel.setForeground(ThemeConfig.DANGER);
+                        statusLabel.setText(result.getErrorMessage());
+                    }
+                } catch (Exception ex) {
+                    statusLabel.setForeground(ThemeConfig.DANGER);
+                    statusLabel.setText("Login failed: " + ex.getMessage());
+                } finally {
+                    signInButton.setEnabled(true);
+                }
+            }
+        }.execute();
+    }
+
     private void loadRememberedCredentials() {
         String[] saved = CredentialStorage.getSavedCredentials();
         if (saved != null) {
@@ -142,5 +166,4 @@ public class LoginFrame extends JFrame {
             rememberMeCheckBox.setSelected(true);
         }
     }
-
 }

@@ -2,11 +2,12 @@ package com.warehousewms.model;
 
 public class Bin {
     private int binId;
-    private int parentBinId;
+    private Integer parentBinId;
     private String name;
     private String binType;
     private double maxWeightKg;
     private double maxVolumeM3;
+    private int sortOrder;
 
     public int getBinId() {
         return binId;
@@ -16,11 +17,11 @@ public class Bin {
         this.binId = binId;
     }
 
-    public int getParentBinId() {
+    public Integer getParentBinId() {
         return parentBinId;
     }
 
-    public void setParentBinId(int parentBinId) {
+    public void setParentBinId(Integer parentBinId) {
         this.parentBinId = parentBinId;
     }
 
@@ -54,6 +55,19 @@ public class Bin {
 
     public void setMaxVolumeM3(double maxVolumeM3) {
         this.maxVolumeM3 = maxVolumeM3;
+    }
+
+    public int getSortOrder() {
+        return sortOrder;
+    }
+
+    public void setSortOrder(int sortOrder) {
+        this.sortOrder = sortOrder;
+    }
+
+    @Override
+    public String toString() {
+        return name + " [" + binType + "]";
     }
 }
 

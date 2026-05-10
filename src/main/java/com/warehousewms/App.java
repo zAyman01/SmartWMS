@@ -1,21 +1,22 @@
 package com.warehousewms;
 
-import com.formdev.flatlaf.FlatLightLaf;
-import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
-
+import com.warehousewms.config.DatabaseManager;
+import com.warehousewms.service.LoginService;
 import com.warehousewms.ui.LoginFrame;
+import com.warehousewms.ui.ThemeConfig;
+
+import javax.swing.*;
 
 public class App {
     public static void main(String[] args) {
-        System.setProperty("flatlaf.useNativeLibrary", "false");
-        // Set modern look and feel
-        FlatLightLaf.setup();
+        ThemeConfig.install();
+
+        DatabaseManager dbManager = new DatabaseManager();
+        LoginService loginService = new LoginService(dbManager.getDataSourceWithFallback());
 
         SwingUtilities.invokeLater(() -> {
-            LoginFrame loginFrame = new LoginFrame();
+            LoginFrame loginFrame = new LoginFrame(loginService);
             loginFrame.setVisible(true);
         });
     }
 }
-

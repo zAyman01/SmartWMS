@@ -7,6 +7,7 @@ public class Product {
     private String imagePath;
     private double unitWeightKg;
     private double unitVolumeM3;
+    private boolean isActive = true;
 
     public int getProductId() {
         return productId;
@@ -54,6 +55,14 @@ public class Product {
 
     public void setUnitVolumeM3(double unitVolumeM3) {
         this.unitVolumeM3 = unitVolumeM3;
+    }
+
+    public boolean isActive() {
+        return isActive;
+    }
+
+    public void setActive(boolean active) {
+        isActive = active;
     }
 }
 

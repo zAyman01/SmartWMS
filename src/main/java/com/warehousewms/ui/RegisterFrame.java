@@ -35,27 +35,25 @@ public class RegisterFrame extends JFrame {
         setMinimumSize(new Dimension(650, 650));
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        setTitle("Smart WMS – Create Account");
+        setTitle("Smart WMS \u2013 Create Account");
+
+        applyTheme();
 
         // Enter key triggers registration
         getRootPane().setDefaultButton(registerButton);
 
         // Hover effect for "Back to sign in" label
         final Color normalColor = backToLoginLabel.getForeground();
-        final Color hoverColor = new Color(0, 102, 204);
         backToLoginLabel.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseEntered(MouseEvent e) {
+            @Override public void mouseEntered(MouseEvent e) {
                 backToLoginLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-                backToLoginLabel.setForeground(hoverColor);
+                backToLoginLabel.setForeground(ThemeConfig.ACCENT_HOVER);
             }
-            @Override
-            public void mouseExited(MouseEvent e) {
+            @Override public void mouseExited(MouseEvent e) {
                 backToLoginLabel.setCursor(Cursor.getDefaultCursor());
                 backToLoginLabel.setForeground(normalColor);
             }
-            @Override
-            public void mouseClicked(MouseEvent e) {
+            @Override public void mouseClicked(MouseEvent e) {
                 dispose();
                 SwingUtilities.invokeLater(() -> {
                     LoginFrame login = new LoginFrame();
@@ -67,6 +65,25 @@ public class RegisterFrame extends JFrame {
         registerButton.addActionListener(e -> registerUser());
     }
 
+    private void applyTheme() {
+        registerButton.setBackground(ThemeConfig.ACCENT);
+        registerButton.setForeground(Color.WHITE);
+        registerButton.setFont(ThemeConfig.FONT_BUTTON);
+        registerButton.setFocusPainted(false);
+        registerButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        registerButton.addMouseListener(new MouseAdapter() {
+            @Override public void mouseEntered(MouseEvent e) {
+                if (registerButton.isEnabled()) registerButton.setBackground(ThemeConfig.ACCENT_HOVER);
+            }
+            @Override public void mouseExited(MouseEvent e) {
+                registerButton.setBackground(ThemeConfig.ACCENT);
+            }
+        });
+
+        titleLabel.setForeground(ThemeConfig.ACCENT);
+        backToLoginLabel.setForeground(ThemeConfig.ACCENT);
+    }
+
     private void registerUser() {
         String fullName = fullNameField.getText().trim();
         String username = usernameField.getText().trim();
@@ -75,24 +92,21 @@ public class RegisterFrame extends JFrame {
 
         // Basic validation
         if (fullName.isEmpty() || username.isEmpty() || password.isEmpty() || confirm.isEmpty()) {
-            statusLabel.setText("All fields are required.");
-            return;
+            statusLabel.setText("All fields are required."); return;
         }
         if (username.length() < 3) {
-            statusLabel.setText("Username must be at least 3 characters.");
-            return;
+            statusLabel.setText("Username must be at least 3 characters."); return;
         }
         if (!password.equals(confirm)) {
-            statusLabel.setText("Passwords do not match.");
-            return;
+            statusLabel.setText("Passwords do not match."); return;
         }
         if (password.length() < 6) {
-            statusLabel.setText("Password must be at least 6 characters.");
-            return;
+            statusLabel.setText("Password must be at least 6 characters."); return;
         }
 
         registerButton.setEnabled(false);
-        statusLabel.setText("Creating account…");
+        statusLabel.setForeground(ThemeConfig.TEXT_MUTED);
+        statusLabel.setText("Creating account\u2026");
 
         new SwingWorker<RegisterResult, Void>() {
             @Override
@@ -106,7 +120,6 @@ public class RegisterFrame extends JFrame {
                     newUser.setUsername(username);
                     newUser.setPasswordHash(password); // Repository hashes before persisting
                     newUser.setRole(DEFAULT_ROLE);
-
                     authService.register(newUser);
                     return RegisterResult.success();
                 } catch (Exception ex) {
@@ -128,9 +141,11 @@ public class RegisterFrame extends JFrame {
                             login.setVisible(true);
                         });
                     } else {
+                        statusLabel.setForeground(ThemeConfig.DANGER);
                         statusLabel.setText(result.message);
                     }
                 } catch (Exception ex) {
+                    statusLabel.setForeground(ThemeConfig.DANGER);
                     statusLabel.setText("Error: " + ex.getMessage());
                 } finally {
                     registerButton.setEnabled(true);
@@ -142,18 +157,10 @@ public class RegisterFrame extends JFrame {
     private static class RegisterResult {
         private final boolean success;
         private final String message;
-
         private RegisterResult(boolean success, String message) {
-            this.success = success;
-            this.message = message;
+            this.success = success; this.message = message;
         }
-
-        private static RegisterResult success() {
-            return new RegisterResult(true, null);
-        }
-
-        private static RegisterResult failure(String message) {
-            return new RegisterResult(false, message);
-        }
+        private static RegisterResult success() { return new RegisterResult(true, null); }
+        private static RegisterResult failure(String message) { return new RegisterResult(false, message); }
     }
 }

@@ -26,27 +26,25 @@ public class ForgetPasswordFrame extends JFrame {
         setMinimumSize(new Dimension(450, 450));
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        setTitle("Smart WMS – Forgot Password");
+        setTitle("Smart WMS \u2013 Forgot Password");
+
+        applyTheme();
 
         // Enter key triggers reset
         getRootPane().setDefaultButton(resetButton);
 
         // Hover effect for "Back to sign in" label
         final Color normalColor = backToLoginLabel.getForeground();
-        final Color hoverColor = new Color(0, 102, 204);
         backToLoginLabel.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseEntered(MouseEvent e) {
+            @Override public void mouseEntered(MouseEvent e) {
                 backToLoginLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-                backToLoginLabel.setForeground(hoverColor);
+                backToLoginLabel.setForeground(ThemeConfig.ACCENT_HOVER);
             }
-            @Override
-            public void mouseExited(MouseEvent e) {
+            @Override public void mouseExited(MouseEvent e) {
                 backToLoginLabel.setCursor(Cursor.getDefaultCursor());
                 backToLoginLabel.setForeground(normalColor);
             }
-            @Override
-            public void mouseClicked(MouseEvent e) {
+            @Override public void mouseClicked(MouseEvent e) {
                 dispose();
                 SwingUtilities.invokeLater(() -> {
                     LoginFrame login = new LoginFrame();
@@ -57,6 +55,25 @@ public class ForgetPasswordFrame extends JFrame {
 
         // Reset button action
         resetButton.addActionListener(e -> handlePasswordReset());
+    }
+
+    private void applyTheme() {
+        resetButton.setBackground(ThemeConfig.ACCENT);
+        resetButton.setForeground(Color.WHITE);
+        resetButton.setFont(ThemeConfig.FONT_BUTTON);
+        resetButton.setFocusPainted(false);
+        resetButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        resetButton.addMouseListener(new MouseAdapter() {
+            @Override public void mouseEntered(MouseEvent e) {
+                if (resetButton.isEnabled()) resetButton.setBackground(ThemeConfig.ACCENT_HOVER);
+            }
+            @Override public void mouseExited(MouseEvent e) {
+                resetButton.setBackground(ThemeConfig.ACCENT);
+            }
+        });
+
+        titleLabel.setForeground(ThemeConfig.ACCENT);
+        backToLoginLabel.setForeground(ThemeConfig.ACCENT);
     }
 
     private void handlePasswordReset() {
@@ -73,7 +90,7 @@ public class ForgetPasswordFrame extends JFrame {
         }
 
         resetButton.setEnabled(false);
-        statusLabel.setForeground(Color.DARK_GRAY);
+        statusLabel.setForeground(ThemeConfig.TEXT_MUTED);
         statusLabel.setText("Resetting password...");
 
         new SwingWorker<Boolean, Void>() {
@@ -89,15 +106,15 @@ public class ForgetPasswordFrame extends JFrame {
                 try {
                     boolean updated = get();
                     if (updated) {
-                        statusLabel.setForeground(new Color(0, 128, 0));
+                        statusLabel.setForeground(ThemeConfig.SUCCESS);
                         statusLabel.setText("Password updated. You can now sign in.");
                         usernameOrEmailField.setText("");
                     } else {
-                        statusLabel.setForeground(Color.RED);
+                        statusLabel.setForeground(ThemeConfig.DANGER);
                         statusLabel.setText("Account not found.");
                     }
                 } catch (Exception ex) {
-                    statusLabel.setForeground(Color.RED);
+                    statusLabel.setForeground(ThemeConfig.DANGER);
                     statusLabel.setText("Error: " + ex.getMessage());
                 } finally {
                     resetButton.setEnabled(true);

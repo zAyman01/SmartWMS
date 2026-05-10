@@ -1,0 +1,183 @@
+package com.warehousewms.ui;
+
+import com.warehousewms.config.DatabaseManager;
+import com.warehousewms.model.OrderLine;
+import com.warehousewms.model.PickRunItem;
+import com.warehousewms.repository.OrderRepository;
+import com.warehousewms.repository.PickRunRepository;
+import com.warehousewms.service.FulfillmentService;
+import com.warehousewms.util.SessionContext;
+
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
+
+public class FulfillmentFrame extends JFrame {
+
+    private JPanel rootPanel;
+    private JPanel mainPanel;
+    private JLabel titleLabel;
+    private JTextField orderIdField;
+    private JButton createRunButton;
+    private JTextField pickRunIdField;
+    private JButton completePickButton;
+    private JPanel toolbarPanel;
+    private JScrollPane tableScrollPane;
+    private JTable pickTable;
+    private JLabel statusLabel;
+
+    private final DefaultTableModel tableModel = new DefaultTableModel(
+            new Object[]{"Item Id", "Order Line Id", "Bin Id", "To Pick", "Picked (Input)"}, 0) {
+        @Override
+        public boolean isCellEditable(int row, int column) {
+            return column == 4;
+        }
+    };
+
+    public FulfillmentFrame() {
+        setContentPane(rootPanel);
+        setTitle("Smart WMS \u2013 Fulfillment");
+        setSize(850, 530);
+        setMinimumSize(new Dimension(700, 460));
+        setLocationRelativeTo(null);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
+        pickTable.setModel(tableModel);
+        ThemeConfig.styleTable(pickTable);
+
+        getContentPane().setBackground(ThemeConfig.BG_PRIMARY);
+        mainPanel.setBackground(ThemeConfig.BG_PRIMARY);
+        toolbarPanel.setBackground(ThemeConfig.BG_PRIMARY);
+        titleLabel.setForeground(ThemeConfig.TEXT_PRIMARY);
+        statusLabel.setForeground(ThemeConfig.TEXT_MUTED);
+        orderIdField.putClientProperty("JTextField.placeholderText", "Order ID");
+        pickRunIdField.putClientProperty("JTextField.placeholderText", "Pick Run ID");
+
+        applyButtonTheme(createRunButton, ThemeConfig.BG_CARD, ThemeConfig.BG_HOVER);
+        applyButtonTheme(completePickButton, ThemeConfig.SUCCESS, ThemeConfig.SUCCESS.brighter());
+
+        createRunButton.addActionListener(e -> createPickRun());
+        completePickButton.addActionListener(e -> completePickRun());
+    }
+
+    private void applyButtonTheme(JButton btn, Color bg, Color hover) {
+        btn.setFont(ThemeConfig.FONT_BUTTON);
+        btn.setBackground(bg);
+        btn.setForeground(bg.equals(ThemeConfig.BG_CARD) ? ThemeConfig.TEXT_PRIMARY : Color.WHITE);
+        btn.setFocusPainted(false);
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btn.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override public void mouseEntered(java.awt.event.MouseEvent e) { btn.setBackground(hover); }
+            @Override public void mouseExited(java.awt.event.MouseEvent e) { btn.setBackground(bg); }
+        });
+    }
+
+    private void createPickRun() {
+        String oIdStr = orderIdField.getText().trim();
+        if (oIdStr.isEmpty()) return;
+        
+        try {
+            int orderId = Integer.parseInt(oIdStr);
+            String binIdStr = JOptionPane.showInputDialog(this, "Enter Bin ID to pick from:", "Bin", JOptionPane.QUESTION_MESSAGE);
+            if (binIdStr == null || binIdStr.trim().isEmpty()) return;
+            int binId = Integer.parseInt(binIdStr.trim());
+
+            statusLabel.setText("Creating Pick Run...");
+            new SwingWorker<Void, Void>() {
+                @Override protected Void doInBackground() throws Exception {
+                    OrderRepository oRepo = new OrderRepository(new DatabaseManager().getDataSourceWithFallback());
+                    List<OrderLine> lines = oRepo.findLinesByOrderId(orderId);
+                    List<PickRunItem> itemsToPick = new ArrayList<>();
+                    
+                    for (OrderLine l : lines) {
+                        PickRunItem pi = new PickRunItem();
+                        pi.setOrderLineId(l.getOrderLineId());
+                        pi.setBinId(binId);
+                        pi.setQuantityToPick(l.getQuantityOrdered() - l.getQuantityPicked());
+                        pi.setQuantityPicked(0);
+                        if (pi.getQuantityToPick() > 0) itemsToPick.add(pi);
+                    }
+
+                    if (itemsToPick.isEmpty()) throw new Exception("No items left to pick for order.");
+
+                    FulfillmentService svc = new FulfillmentService(new DatabaseManager().getDataSourceWithFallback());
+                    int userId = SessionContext.getCurrentUser() != null ? SessionContext.getCurrentUser().getUserId() : 1;
+                    svc.createPickRun(orderId, userId, itemsToPick);
+                    return null;
+                }
+                @Override protected void done() {
+                    try { get(); statusLabel.setText("Pick Run created."); }
+                    catch (Exception ex) { statusLabel.setText("Failed: " + ex.getMessage()); }
+                }
+            }.execute();
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "Invalid input");
+        }
+    }
+
+    private void completePickRun() {
+        if (pickTable.isEditing()) pickTable.getCellEditor().stopCellEditing();
+        String prIdStr = pickRunIdField.getText().trim();
+        if (prIdStr.isEmpty()) {
+            // First load it
+            String loadIdStr = JOptionPane.showInputDialog(this, "Enter Pick Run ID to load:", "Load Pick Run", JOptionPane.QUESTION_MESSAGE);
+            if (loadIdStr == null || loadIdStr.trim().isEmpty()) return;
+            try {
+                int prId = Integer.parseInt(loadIdStr.trim());
+                pickRunIdField.setText(String.valueOf(prId));
+                statusLabel.setText("Loading items...");
+                new SwingWorker<List<PickRunItem>, Void>() {
+                    @Override protected List<PickRunItem> doInBackground() throws Exception {
+                        PickRunRepository repo = new PickRunRepository(new DatabaseManager().getDataSourceWithFallback());
+                        return repo.findItemsByPickRunId(prId);
+                    }
+                    @Override protected void done() {
+                        try {
+                            List<PickRunItem> items = get();
+                            tableModel.setRowCount(0);
+                            for (PickRunItem it : items) {
+                                tableModel.addRow(new Object[]{it.getPickRunItemId(), it.getOrderLineId(), it.getBinId(), it.getQuantityToPick(), 0});
+                            }
+                            statusLabel.setText("Loaded " + items.size() + " items. Enter picked quantities and click Complete.");
+                        } catch (Exception ex) { statusLabel.setText("Failed: " + ex.getMessage()); }
+                    }
+                }.execute();
+            } catch (Exception e) { JOptionPane.showMessageDialog(this, "Invalid ID"); }
+            return;
+        }
+
+        try {
+            int prId = Integer.parseInt(prIdStr);
+            List<PickRunItem> pickedItems = new ArrayList<>();
+            for (int i = 0; i < tableModel.getRowCount(); i++) {
+                int picked = Integer.parseInt(tableModel.getValueAt(i, 4).toString());
+                if (picked > 0) {
+                    PickRunItem it = new PickRunItem();
+                    it.setPickRunItemId((int) tableModel.getValueAt(i, 0));
+                    it.setOrderLineId((int) tableModel.getValueAt(i, 1));
+                    it.setBinId((int) tableModel.getValueAt(i, 2));
+                    it.setQuantityPicked(picked);
+                    pickedItems.add(it);
+                }
+            }
+
+            statusLabel.setText("Completing Pick Run...");
+            new SwingWorker<Void, Void>() {
+                @Override protected Void doInBackground() throws Exception {
+                    FulfillmentService svc = new FulfillmentService(new DatabaseManager().getDataSourceWithFallback());
+                    int userId = SessionContext.getCurrentUser() != null ? SessionContext.getCurrentUser().getUserId() : 1;
+                    svc.completePick(prId, pickedItems, userId);
+                    return null;
+                }
+                @Override protected void done() {
+                    try { get(); statusLabel.setText("Pick Run completed successfully."); tableModel.setRowCount(0); }
+                    catch (Exception ex) { statusLabel.setText("Failed: " + ex.getMessage()); }
+                }
+            }.execute();
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Error in processing completion.");
+        }
+    }
+}
