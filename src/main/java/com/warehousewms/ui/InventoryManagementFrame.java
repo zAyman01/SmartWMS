@@ -23,6 +23,7 @@ public class InventoryManagementFrame extends JFrame {
     private JButton adjustButton;
     private JButton transferButton;
     private JButton refreshButton;
+    private JButton printButton;
     private JScrollPane tableScrollPane;
     private JTable inventoryTable;
     private JLabel statusLabel;
@@ -55,6 +56,7 @@ public class InventoryManagementFrame extends JFrame {
         applyButtonTheme(adjustButton, ThemeConfig.ACCENT, ThemeConfig.ACCENT_HOVER);
         applyButtonTheme(transferButton, ThemeConfig.WARNING, ThemeConfig.WARNING.brighter());
         applyButtonTheme(refreshButton, ThemeConfig.BG_CARD, ThemeConfig.BG_HOVER);
+        applyButtonTheme(printButton, ThemeConfig.BG_CARD, ThemeConfig.BG_HOVER);
 
         searchField.getDocument().addDocumentListener(new DocumentListener() {
             private void filter() {
@@ -69,6 +71,7 @@ public class InventoryManagementFrame extends JFrame {
         adjustButton.addActionListener(e -> doAdjust());
         transferButton.addActionListener(e -> doTransfer());
         refreshButton.addActionListener(e -> loadInventory());
+        printButton.addActionListener(e -> printReport());
 
         loadInventory();
     }
@@ -170,5 +173,25 @@ public class InventoryManagementFrame extends JFrame {
         } catch (NumberFormatException e) {
             JOptionPane.showMessageDialog(this, "Invalid input.");
         }
+    }
+
+    private void printReport() {
+        statusLabel.setText("Generating report...");
+        new SwingWorker<Void, Void>() {
+            @Override protected Void doInBackground() throws Exception {
+                com.warehousewms.service.ReportService rs = new com.warehousewms.service.ReportService();
+                rs.generateInventoryReport();
+                return null;
+            }
+            @Override protected void done() {
+                try {
+                    get();
+                    statusLabel.setText("Report opened in viewer.");
+                } catch (Exception ex) {
+                    statusLabel.setText("Failed to generate report: " + ex.getMessage());
+                    JOptionPane.showMessageDialog(InventoryManagementFrame.this, "Error generating report:\n" + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }.execute();
     }
 }

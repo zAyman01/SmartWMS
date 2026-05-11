@@ -84,6 +84,15 @@ public class DashboardFrame extends JFrame {
         sidebar.add(navItem("\u23F1  Fulfillment", () -> openFrame(new FulfillmentFrame())));
         sidebar.add(navItem("\uD83D\uDCCA  Inventory Mgmt", () -> openFrame(new InventoryManagementFrame())));
 
+        sidebar.add(Box.createVerticalStrut(8));
+        JLabel analyticsSection = new JLabel("  REPORTS & KPI");
+        analyticsSection.setFont(ThemeConfig.FONT_SMALL);
+        analyticsSection.setForeground(ThemeConfig.TEXT_MUTED);
+        analyticsSection.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
+        analyticsSection.setBorder(new EmptyBorder(4, 16, 4, 0));
+        sidebar.add(analyticsSection);
+        sidebar.add(navItem("\uD83D\uDCC8  Analytics Dashboard", () -> openFrame(new AnalyticsFrame())));
+
         if (SessionContext.isAdmin()) {
             sidebar.add(Box.createVerticalStrut(8));
             JLabel adminSection = new JLabel("  ADMIN");
@@ -93,6 +102,7 @@ public class DashboardFrame extends JFrame {
             adminSection.setBorder(new EmptyBorder(4, 16, 4, 0));
             sidebar.add(adminSection);
             sidebar.add(navItem("\uD83D\uDD12  User Management", () -> openFrame(new UserManagementFrame())));
+            sidebar.add(navItem("\uD83D\uDCBE  Database Backup", () -> openFrame(new BackupFrame())));
         }
 
         sidebar.add(Box.createVerticalGlue());

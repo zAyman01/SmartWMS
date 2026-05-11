@@ -34,11 +34,11 @@
 - [x] Picking/packing/shipping
 - [x] Stock adjustments and transfers
 
-### Phase 6 — Reporting & dashboards (PLANNED)
-- [ ] KPI dashboard (JFreeChart)
-- [ ] Printable reports (JasperReports)
+### Phase 6 — Reporting & dashboards (DONE)
+- [x] KPI dashboard (JFreeChart)
+- [x] Printable reports (JasperReports)
 
-### Phase 7 — Polish & deployment (PLANNED)
-- [ ] Error handling and logging
-- [ ] Installer/build packaging
-- [ ] Backup/restore strategy
+### Phase 7 — Polish & deployment (DONE)
+- [x] Error handling and logging
+- [x] Installer/build packaging
+- [x] Backup/restore strategy

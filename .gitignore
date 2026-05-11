@@ -2,6 +2,13 @@ target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
+
+### H2 database files ###
+*.mv.db
+*.trace.db
+
+### Maven Shade Plugin ###
+dependency-reduced-pom.xml
 .kotlin
 
 ### IntelliJ IDEA ###

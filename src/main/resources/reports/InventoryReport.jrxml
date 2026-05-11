@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE jasperReport PUBLIC "//JasperReports//DTD Report Design//EN" "http://jasperreports.sourceforge.net/dtds/jasperreport.dtd">
+<jasperReport name="InventoryReport" pageWidth="595" pageHeight="842" columnWidth="515" leftMargin="40" rightMargin="40" topMargin="50" bottomMargin="50">
+    <queryString>
+        <![CDATA[SELECT p.SKU, p.Name AS ProductName, b.Name AS BinName, i.Quantity 
+                 FROM Inventory i 
+                 JOIN Products p ON i.ProductId = p.ProductId 
+                 JOIN Bins b ON i.BinId = b.BinId 
+                 ORDER BY p.Name, b.Name]]>
+    </queryString>
+    <field name="SKU" class="java.lang.String"/>
+    <field name="ProductName" class="java.lang.String"/>
+    <field name="BinName" class="java.lang.String"/>
+    <field name="Quantity" class="java.lang.Integer"/>
+
+    <title>
+        <band height="50">
+            <staticText>
+                <reportElement x="0" y="0" width="515" height="30"/>
+                <textElement textAlignment="Center">
+                    <font size="20" isBold="true"/>
+                </textElement>
+                <text><![CDATA[SmartWMS Inventory Report]]></text>
+            </staticText>
+        </band>
+    </title>
+
+    <columnHeader>
+        <band height="30">
+            <staticText>
+                <reportElement x="0" y="0" width="100" height="20"/>
+                <textElement><font isBold="true"/></textElement>
+                <text><![CDATA[SKU]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="100" y="0" width="200" height="20"/>
+                <textElement><font isBold="true"/></textElement>
+                <text><![CDATA[Product Name]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="300" y="0" width="100" height="20"/>
+                <textElement><font isBold="true"/></textElement>
+                <text><![CDATA[Location]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="400" y="0" width="100" height="20"/>
+                <textElement><font isBold="true"/></textElement>
+                <text><![CDATA[Quantity]]></text>
+            </staticText>
+            <line>
+                <reportElement x="0" y="25" width="515" height="1"/>
+            </line>
+        </band>
+    </columnHeader>
+
+    <detail>
+        <band height="20">
+            <textField>
+                <reportElement x="0" y="0" width="100" height="20"/>
+                <textFieldExpression><![CDATA[$F{SKU}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="100" y="0" width="200" height="20"/>
+                <textFieldExpression><![CDATA[$F{ProductName}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="300" y="0" width="100" height="20"/>
+                <textFieldExpression><![CDATA[$F{BinName}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="400" y="0" width="100" height="20"/>
+                <textFieldExpression><![CDATA[$F{Quantity}]]></textFieldExpression>
+            </textField>
+        </band>
+    </detail>
+
+    <pageFooter>
+        <band height="30">
+            <textField>
+                <reportElement x="200" y="10" width="115" height="20"/>
+                <textElement textAlignment="Center"/>
+                <textFieldExpression><![CDATA["Page " + $V{PAGE_NUMBER}]]></textFieldExpression>
+            </textField>
+        </band>
+    </pageFooter>
+</jasperReport>

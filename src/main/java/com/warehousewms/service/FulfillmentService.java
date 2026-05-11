@@ -51,8 +51,6 @@ public class FulfillmentService {
         pr.setStatus("Completed");
         pickRepo.update(pr);
 
-        int orderId = -1;
-
         for (PickRunItem item : pickedItems) {
             item.setStatus("Picked");
             pickRepo.updateItem(item);
