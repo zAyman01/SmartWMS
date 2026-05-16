@@ -73,7 +73,7 @@ public class BinRepository {
     public void insert(Bin bin) throws SQLException {
         String sql = "INSERT INTO Bins (ParentBinId, Name, BinType, MaxWeightKg, MaxVolumeM3, SortOrder) VALUES (?, ?, ?, ?, ?, ?)";
         try (Connection conn = dataSource.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+             PreparedStatement ps = conn.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS)) {
             if (bin.getParentBinId() != null) {
                 ps.setInt(1, bin.getParentBinId());
             } else {
@@ -85,6 +85,10 @@ public class BinRepository {
             ps.setDouble(5, bin.getMaxVolumeM3());
             ps.setInt(6, bin.getSortOrder());
             ps.executeUpdate();
+            ResultSet rs = ps.getGeneratedKeys();
+            if (rs.next()) {
+                bin.setBinId(rs.getInt(1));
+            }
         }
     }
 

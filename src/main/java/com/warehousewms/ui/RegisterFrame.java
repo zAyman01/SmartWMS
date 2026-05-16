@@ -45,15 +45,20 @@ public class RegisterFrame extends JFrame {
         // Hover effect for "Back to sign in" label
         final Color normalColor = backToLoginLabel.getForeground();
         backToLoginLabel.addMouseListener(new MouseAdapter() {
-            @Override public void mouseEntered(MouseEvent e) {
+            @Override
+            public void mouseEntered(MouseEvent e) {
                 backToLoginLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
                 backToLoginLabel.setForeground(ThemeConfig.ACCENT_HOVER);
             }
-            @Override public void mouseExited(MouseEvent e) {
+
+            @Override
+            public void mouseExited(MouseEvent e) {
                 backToLoginLabel.setCursor(Cursor.getDefaultCursor());
                 backToLoginLabel.setForeground(normalColor);
             }
-            @Override public void mouseClicked(MouseEvent e) {
+
+            @Override
+            public void mouseClicked(MouseEvent e) {
                 dispose();
                 SwingUtilities.invokeLater(() -> {
                     LoginFrame login = new LoginFrame();
@@ -72,16 +77,21 @@ public class RegisterFrame extends JFrame {
         registerButton.setFocusPainted(false);
         registerButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         registerButton.addMouseListener(new MouseAdapter() {
-            @Override public void mouseEntered(MouseEvent e) {
+            @Override
+            public void mouseEntered(MouseEvent e) {
                 if (registerButton.isEnabled()) registerButton.setBackground(ThemeConfig.ACCENT_HOVER);
             }
-            @Override public void mouseExited(MouseEvent e) {
+
+            @Override
+            public void mouseExited(MouseEvent e) {
                 registerButton.setBackground(ThemeConfig.ACCENT);
             }
         });
 
         titleLabel.setForeground(ThemeConfig.ACCENT);
         backToLoginLabel.setForeground(ThemeConfig.ACCENT);
+
+        ThemeConfig.applyEmojiFont(appIconLabel);
     }
 
     private void registerUser() {
@@ -92,16 +102,20 @@ public class RegisterFrame extends JFrame {
 
         // Basic validation
         if (fullName.isEmpty() || username.isEmpty() || password.isEmpty() || confirm.isEmpty()) {
-            statusLabel.setText("All fields are required."); return;
+            statusLabel.setText("All fields are required.");
+            return;
         }
         if (username.length() < 3) {
-            statusLabel.setText("Username must be at least 3 characters."); return;
+            statusLabel.setText("Username must be at least 3 characters.");
+            return;
         }
         if (!password.equals(confirm)) {
-            statusLabel.setText("Passwords do not match."); return;
+            statusLabel.setText("Passwords do not match.");
+            return;
         }
         if (password.length() < 6) {
-            statusLabel.setText("Password must be at least 6 characters."); return;
+            statusLabel.setText("Password must be at least 6 characters.");
+            return;
         }
 
         registerButton.setEnabled(false);
@@ -157,10 +171,23 @@ public class RegisterFrame extends JFrame {
     private static class RegisterResult {
         private final boolean success;
         private final String message;
+
         private RegisterResult(boolean success, String message) {
-            this.success = success; this.message = message;
+            this.success = success;
+            this.message = message;
         }
-        private static RegisterResult success() { return new RegisterResult(true, null); }
-        private static RegisterResult failure(String message) { return new RegisterResult(false, message); }
+
+        private static RegisterResult success() {
+            return new RegisterResult(true, null);
+        }
+
+        private static RegisterResult failure(String message) {
+            return new RegisterResult(false, message);
+        }
+    }
+
+    public static void main(String[] args) {
+        ThemeConfig.install();
+        SwingUtilities.invokeLater(() -> new RegisterFrame().setVisible(true));
     }
 }

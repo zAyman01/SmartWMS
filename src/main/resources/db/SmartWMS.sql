@@ -61,6 +61,7 @@ CREATE TABLE Products (
     UnitWeightKg    DECIMAL(10,3)       NOT NULL CONSTRAINT DF_Products_UnitWeightKg DEFAULT 0,
     UnitVolumeM3    DECIMAL(10,6)       NOT NULL CONSTRAINT DF_Products_UnitVolumeM3 DEFAULT 0,
     IsActive        BIT                 NOT NULL CONSTRAINT DF_Products_IsActive DEFAULT 1,
+    Barcode         NVARCHAR(100)       NULL,
     CONSTRAINT PK_Products PRIMARY KEY CLUSTERED (ProductId),
     CONSTRAINT UQ_Products_SKU UNIQUE (SKU)
 );
@@ -264,6 +265,7 @@ GO
 -- =============================================
 -- PERFORMANCE INDEXES (non‑clustered)
 -- =============================================
+CREATE NONCLUSTERED INDEX IX_Products_Barcode ON Products(Barcode);
 CREATE NONCLUSTERED INDEX IX_Inventory_ProductId ON Inventory(ProductId);
 CREATE NONCLUSTERED INDEX IX_Inventory_BinId ON Inventory(BinId);
 CREATE NONCLUSTERED INDEX IX_OrderLines_OrderId ON OrderLines(OrderId);
@@ -273,12 +275,13 @@ CREATE NONCLUSTERED INDEX IX_AuditLog_Table_Record ON AuditLog(TableName, Record
 GO
 
 -- =============================================
--- DEFAULT DATA: Admin user (password = 'password')
--- Password hash is SHA-256 of 'password'
+-- DEFAULT DATA: Admin user (password = 'admin123')
+-- NOTE: The hash below is a PBKDF2WithHmacSHA256 hash.
+-- This must match the format produced by UserRepository.hashPassword().
+-- Run the SeedData Java class to generate the correct hash for your environment,
+-- or use the H2 fallback which auto-computes it.
 -- =============================================
-INSERT INTO Users (Username, PasswordHash, FullName, Role)
-VALUES (N'admin', N'5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', N'System Administrator', N'Admin');
-GO
+PRINT N'SKIP user seed here — use SeedData.java or H2 auto-init for PBKDF2 hash generation.';
 
 PRINT N'Smart WMS database recreated successfully.';
 GO

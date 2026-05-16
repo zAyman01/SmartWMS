@@ -31,9 +31,11 @@ class EncryptionUtilTest {
     }
 
     @Test
-    void encryptProducesSameOutputForSameInput() {
+    void encryptWithRandomIVProducesDifferentOutputForSameInput() {
         String enc1 = EncryptionUtil.encrypt("same");
         String enc2 = EncryptionUtil.encrypt("same");
-        assertEquals(enc1, enc2, "AES/ECB should produce same ciphertext for same plaintext");
+        assertNotEquals(enc1, enc2, "AES/GCM with random IV should produce different ciphertext for same plaintext");
+        assertEquals("same", EncryptionUtil.decrypt(enc1), "First ciphertext should decrypt correctly");
+        assertEquals("same", EncryptionUtil.decrypt(enc2), "Second ciphertext should decrypt correctly");
     }
 }

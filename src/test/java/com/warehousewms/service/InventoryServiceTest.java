@@ -35,33 +35,25 @@ class InventoryServiceTest {
         ProductRepository prodRepo = new ProductRepository(ds);
         BinRepository binRepo = new BinRepository(ds);
 
-        // Create test product
         Product p = new Product();
         p.setSku("SVC-P-" + System.nanoTime());
         p.setName("Service Test Product");
         prodRepo.insert(p);
-        productId = prodRepo.listAll().stream()
-                .filter(x -> x.getSku().equals(p.getSku()))
-                .findFirst().orElseThrow().getProductId();
+        productId = p.getProductId();
 
-        // Create two test bins
         Bin b1 = new Bin();
         b1.setName("SvcBin1-" + System.nanoTime());
         b1.setBinType("Location");
         b1.setSortOrder(0);
         binRepo.insert(b1);
-        binId1 = binRepo.listAll().stream()
-                .filter(x -> x.getName().equals(b1.getName()))
-                .findFirst().orElseThrow().getBinId();
+        binId1 = b1.getBinId();
 
         Bin b2 = new Bin();
         b2.setName("SvcBin2-" + System.nanoTime());
         b2.setBinType("Location");
         b2.setSortOrder(0);
         binRepo.insert(b2);
-        binId2 = binRepo.listAll().stream()
-                .filter(x -> x.getName().equals(b2.getName()))
-                .findFirst().orElseThrow().getBinId();
+        binId2 = b2.getBinId();
     }
 
     @AfterEach

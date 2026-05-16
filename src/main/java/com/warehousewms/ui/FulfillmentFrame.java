@@ -27,6 +27,7 @@ public class FulfillmentFrame extends JFrame {
     private JScrollPane tableScrollPane;
     private JTable pickTable;
     private JLabel statusLabel;
+    private BarcodeScannerPanel scannerPanel;
 
     private final DefaultTableModel tableModel = new DefaultTableModel(
             new Object[]{"Item Id", "Order Line Id", "Bin Id", "To Pick", "Picked (Input)"}, 0) {
@@ -58,8 +59,49 @@ public class FulfillmentFrame extends JFrame {
         applyButtonTheme(createRunButton, ThemeConfig.BG_CARD, ThemeConfig.BG_HOVER);
         applyButtonTheme(completePickButton, ThemeConfig.SUCCESS, ThemeConfig.SUCCESS.brighter());
 
+        scannerPanel = new BarcodeScannerPanel();
+        scannerPanel.setParentFrame(this);
+        mainPanel.add(scannerPanel, BorderLayout.NORTH);
+        scannerPanel.setScanListener(this::onBarcodeScan);
+
         createRunButton.addActionListener(e -> createPickRun());
         completePickButton.addActionListener(e -> completePickRun());
+    }
+
+    private void onBarcodeScan(com.warehousewms.model.Product product) {
+        if (tableModel.getRowCount() == 0) {
+            statusLabel.setText("No pick items loaded. Load a Pick Run first.");
+            return;
+        }
+        new SwingWorker<Void, Void>() {
+            @Override
+            protected Void doInBackground() throws Exception {
+                com.warehousewms.repository.OrderRepository oRepo =
+                        new com.warehousewms.repository.OrderRepository(
+                                new com.warehousewms.config.DatabaseManager().getDataSourceWithFallback());
+                int pid = product.getProductId();
+                for (int i = 0; i < tableModel.getRowCount(); i++) {
+                    int olId = (int) tableModel.getValueAt(i, 1);
+                    com.warehousewms.model.OrderLine ol = oRepo.findOrderLineById(olId);
+                    if (ol != null && ol.getProductId() == pid) {
+                        int toPick = (int) tableModel.getValueAt(i, 3);
+                        int alreadyPicked = Integer.parseInt(tableModel.getValueAt(i, 4).toString());
+                        int remaining = toPick - alreadyPicked;
+                        if (remaining > 0) {
+                            final int row = i;
+                            SwingUtilities.invokeLater(() -> {
+                                tableModel.setValueAt(toPick, row, 4);
+                                statusLabel.setText("Scanned: " + product.getSku() + " \u2013 set Qty " + toPick);
+                            });
+                        }
+                        return null;
+                    }
+                }
+                SwingUtilities.invokeLater(() ->
+                        statusLabel.setText("Product " + product.getSku() + " not found in this Pick Run"));
+                return null;
+            }
+        }.execute();
     }
 
     private void applyButtonTheme(JButton btn, Color bg, Color hover) {
@@ -180,4 +222,10 @@ public class FulfillmentFrame extends JFrame {
             JOptionPane.showMessageDialog(this, "Error in processing completion.");
         }
     }
+
+    public static void main(String[] args) {
+        ThemeConfig.install();
+        SwingUtilities.invokeLater(() -> new FulfillmentFrame().setVisible(true));
+    }
 }
+

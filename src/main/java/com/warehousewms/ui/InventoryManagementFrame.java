@@ -27,10 +27,13 @@ public class InventoryManagementFrame extends JFrame {
     private JScrollPane tableScrollPane;
     private JTable inventoryTable;
     private JLabel statusLabel;
+    private BarcodeScannerPanel scannerPanel;
 
-    private final DefaultTableModel tableModel = new DefaultTableModel(
-            new Object[]{"Inventory Id", "Product Id", "Bin Id", "Quantity"}, 0) {
-        @Override public boolean isCellEditable(int row, int column) { return false; }
+    private final DefaultTableModel tableModel = new DefaultTableModel(new Object[]{"Inventory Id", "Product Id", "Bin Id", "Quantity"}, 0) {
+        @Override
+        public boolean isCellEditable(int row, int column) {
+            return false;
+        }
     };
     private final TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(tableModel);
 
@@ -63,10 +66,19 @@ public class InventoryManagementFrame extends JFrame {
                 String t = searchField.getText().trim();
                 sorter.setRowFilter(t.isEmpty() ? null : RowFilter.regexFilter("(?i)" + t));
             }
-            @Override public void insertUpdate(DocumentEvent e) { filter(); }
-            @Override public void removeUpdate(DocumentEvent e) { filter(); }
-            @Override public void changedUpdate(DocumentEvent e) { filter(); }
+
+            @Override
+            public void insertUpdate(DocumentEvent e) { filter(); }
+            @Override
+            public void removeUpdate(DocumentEvent e) { filter(); }
+            @Override
+            public void changedUpdate(DocumentEvent e) { filter(); }
         });
+
+        scannerPanel = new BarcodeScannerPanel();
+        scannerPanel.setParentFrame(this);
+        mainPanel.add(scannerPanel, BorderLayout.NORTH);
+        scannerPanel.setScanListener(this::onBarcodeScan);
 
         adjustButton.addActionListener(e -> doAdjust());
         transferButton.addActionListener(e -> doTransfer());
@@ -76,6 +88,11 @@ public class InventoryManagementFrame extends JFrame {
         loadInventory();
     }
 
+    private void onBarcodeScan(com.warehousewms.model.Product product) {
+        searchField.setText(String.valueOf(product.getProductId()));
+        statusLabel.setText("Scanned: " + product.getSku() + " \u2013 " + product.getName());
+    }
+
     private void applyButtonTheme(JButton btn, Color bg, Color hover) {
         btn.setFont(ThemeConfig.FONT_BUTTON);
         btn.setBackground(bg);
@@ -83,25 +100,34 @@ public class InventoryManagementFrame extends JFrame {
         btn.setFocusPainted(false);
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btn.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override public void mouseEntered(java.awt.event.MouseEvent e) { btn.setBackground(hover); }
-            @Override public void mouseExited(java.awt.event.MouseEvent e) { btn.setBackground(bg); }
+            @Override
+            public void mouseEntered(java.awt.event.MouseEvent e) {
+                btn.setBackground(hover);
+            }
+
+            @Override
+            public void mouseExited(java.awt.event.MouseEvent e) {
+                btn.setBackground(bg);
+            }
         });
     }
 
     private void loadInventory() {
         statusLabel.setText("Loading Inventory...");
         new SwingWorker<List<Inventory>, Void>() {
-            @Override protected List<Inventory> doInBackground() throws Exception {
+            @Override
+            protected List<Inventory> doInBackground() throws Exception {
                 InventoryService svc = new InventoryService(new DatabaseManager().getDataSourceWithFallback());
                 return svc.getAllInventory();
             }
-            @Override protected void done() {
+
+            @Override
+            protected void done() {
                 try {
                     List<Inventory> list = get();
                     tableModel.setRowCount(0);
                     for (Inventory inv : list) {
-                        tableModel.addRow(new Object[]{inv.getInventoryId(), inv.getProductId(),
-                                inv.getBinId(), inv.getQuantity()});
+                        tableModel.addRow(new Object[]{inv.getInventoryId(), inv.getProductId(), inv.getBinId(), inv.getQuantity()});
                     }
                     statusLabel.setText("Loaded " + list.size() + " inventory records.");
                 } catch (Exception ex) {
@@ -113,7 +139,10 @@ public class InventoryManagementFrame extends JFrame {
 
     private void doAdjust() {
         int vr = inventoryTable.getSelectedRow();
-        if (vr < 0) { statusLabel.setText("Select an item to adjust."); return; }
+        if (vr < 0) {
+            statusLabel.setText("Select an item to adjust.");
+            return;
+        }
         int mr = inventoryTable.convertRowIndexToModel(vr);
         int pId = (int) tableModel.getValueAt(mr, 1);
         int bId = (int) tableModel.getValueAt(mr, 2);
@@ -124,15 +153,23 @@ public class InventoryManagementFrame extends JFrame {
         try {
             int delta = Integer.parseInt(qtyStr.trim());
             new SwingWorker<Void, Void>() {
-                @Override protected Void doInBackground() throws Exception {
+                @Override
+                protected Void doInBackground() throws Exception {
                     int userId = SessionContext.getCurrentUser() != null ? SessionContext.getCurrentUser().getUserId() : 1;
                     InventoryService svc = new InventoryService(new DatabaseManager().getDataSourceWithFallback());
                     svc.adjustStock(pId, bId, delta, userId, "Manual Adjustment");
                     return null;
                 }
-                @Override protected void done() {
-                    try { get(); statusLabel.setText("Stock adjusted."); loadInventory(); }
-                    catch (Exception ex) { statusLabel.setText("Failed: " + ex.getMessage()); }
+
+                @Override
+                protected void done() {
+                    try {
+                        get();
+                        statusLabel.setText("Stock adjusted.");
+                        loadInventory();
+                    } catch (Exception ex) {
+                        statusLabel.setText("Failed: " + ex.getMessage());
+                    }
                 }
             }.execute();
         } catch (NumberFormatException e) {
@@ -142,7 +179,10 @@ public class InventoryManagementFrame extends JFrame {
 
     private void doTransfer() {
         int vr = inventoryTable.getSelectedRow();
-        if (vr < 0) { statusLabel.setText("Select an item to transfer."); return; }
+        if (vr < 0) {
+            statusLabel.setText("Select an item to transfer.");
+            return;
+        }
         int mr = inventoryTable.convertRowIndexToModel(vr);
         int pId = (int) tableModel.getValueAt(mr, 1);
         int fromBId = (int) tableModel.getValueAt(mr, 2);
@@ -150,24 +190,35 @@ public class InventoryManagementFrame extends JFrame {
         JTextField toBinF = new JTextField();
         JTextField qtyF = new JTextField();
         JPanel p = new JPanel(new GridLayout(0, 1));
-        p.add(new JLabel("To Bin Id:")); p.add(toBinF);
-        p.add(new JLabel("Quantity to Transfer:")); p.add(qtyF);
+        p.add(new JLabel("To Bin Id:"));
+        p.add(toBinF);
+        p.add(new JLabel("Quantity to Transfer:"));
+        p.add(qtyF);
 
-        if (JOptionPane.showConfirmDialog(this, p, "Transfer Stock", JOptionPane.OK_CANCEL_OPTION) != JOptionPane.OK_OPTION) return;
+        if (JOptionPane.showConfirmDialog(this, p, "Transfer Stock", JOptionPane.OK_CANCEL_OPTION) != JOptionPane.OK_OPTION)
+            return;
 
         try {
             int toBinId = Integer.parseInt(toBinF.getText().trim());
             int qty = Integer.parseInt(qtyF.getText().trim());
             new SwingWorker<Void, Void>() {
-                @Override protected Void doInBackground() throws Exception {
+                @Override
+                protected Void doInBackground() throws Exception {
                     int userId = SessionContext.getCurrentUser() != null ? SessionContext.getCurrentUser().getUserId() : 1;
                     InventoryService svc = new InventoryService(new DatabaseManager().getDataSourceWithFallback());
                     svc.transferStock(pId, fromBId, toBinId, qty, userId);
                     return null;
                 }
-                @Override protected void done() {
-                    try { get(); statusLabel.setText("Stock transferred."); loadInventory(); }
-                    catch (Exception ex) { statusLabel.setText("Failed: " + ex.getMessage()); }
+
+                @Override
+                protected void done() {
+                    try {
+                        get();
+                        statusLabel.setText("Stock transferred.");
+                        loadInventory();
+                    } catch (Exception ex) {
+                        statusLabel.setText("Failed: " + ex.getMessage());
+                    }
                 }
             }.execute();
         } catch (NumberFormatException e) {
@@ -178,12 +229,15 @@ public class InventoryManagementFrame extends JFrame {
     private void printReport() {
         statusLabel.setText("Generating report...");
         new SwingWorker<Void, Void>() {
-            @Override protected Void doInBackground() throws Exception {
+            @Override
+            protected Void doInBackground() throws Exception {
                 com.warehousewms.service.ReportService rs = new com.warehousewms.service.ReportService();
                 rs.generateInventoryReport();
                 return null;
             }
-            @Override protected void done() {
+
+            @Override
+            protected void done() {
                 try {
                     get();
                     statusLabel.setText("Report opened in viewer.");
@@ -193,5 +247,10 @@ public class InventoryManagementFrame extends JFrame {
                 }
             }
         }.execute();
+    }
+
+    public static void main(String[] args) {
+        ThemeConfig.install();
+        SwingUtilities.invokeLater(() -> new InventoryManagementFrame().setVisible(true));
     }
 }

@@ -32,8 +32,7 @@ class UserRepositoryTest {
 
     @Test
     void authenticateWithValidCredentials() throws SQLException {
-        // The default admin user has password "password"
-        User user = repo.authenticate("admin", "password");
+        User user = repo.authenticate("admin", "admin123");
         assertNotNull(user, "Admin user should authenticate with correct password");
         assertEquals("admin", user.getUsername());
         assertEquals("Admin", user.getRole());
@@ -48,7 +47,7 @@ class UserRepositoryTest {
 
     @Test
     void authenticateWithNonExistentUser() throws SQLException {
-        User user = repo.authenticate("nonexistent", "password");
+        User user = repo.authenticate("nonexistent", "admin123");
         assertNull(user, "Should return null for non-existent user");
     }
 
@@ -132,11 +131,12 @@ class UserRepositoryTest {
     }
 
     @Test
-    void hashPasswordIsConsistent() {
+    void hashPasswordUsesRandomSalt() {
         String hash1 = UserRepository.hashPassword("password");
         String hash2 = UserRepository.hashPassword("password");
-        assertEquals(hash1, hash2, "Same input should produce same hash");
-        assertEquals("5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8", hash1,
-                "SHA-256 of 'password' should match known hash");
+        assertNotEquals(hash1, hash2, "PBKDF2 with random salt should produce different hashes");
+        assertTrue(hash1.contains(":"), "Hash should contain salt:hash format");
+        assertTrue(UserRepository.checkPassword("password", hash1), "checkPassword should verify correct password");
+        assertFalse(UserRepository.checkPassword("wrong", hash1), "checkPassword should reject wrong password");
     }
 }

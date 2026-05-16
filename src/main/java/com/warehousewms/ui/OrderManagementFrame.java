@@ -28,9 +28,11 @@ public class OrderManagementFrame extends JFrame {
     private JTable orderTable;
     private JLabel statusLabel;
 
-    private final DefaultTableModel tableModel = new DefaultTableModel(
-            new Object[]{"Order Id", "Customer Id", "Date", "Status", "Notes"}, 0) {
-        @Override public boolean isCellEditable(int row, int column) { return false; }
+    private final DefaultTableModel tableModel = new DefaultTableModel(new Object[]{"Order Id", "Customer Id", "Date", "Status", "Notes"}, 0) {
+        @Override
+        public boolean isCellEditable(int row, int column) {
+            return false;
+        }
     };
     private final TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(tableModel);
 
@@ -62,9 +64,21 @@ public class OrderManagementFrame extends JFrame {
                 String t = searchField.getText().trim();
                 sorter.setRowFilter(t.isEmpty() ? null : RowFilter.regexFilter("(?i)" + t));
             }
-            @Override public void insertUpdate(DocumentEvent e) { filter(); }
-            @Override public void removeUpdate(DocumentEvent e) { filter(); }
-            @Override public void changedUpdate(DocumentEvent e) { filter(); }
+
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                filter();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                filter();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                filter();
+            }
         });
 
         addButton.addActionListener(e -> addOrder());
@@ -81,25 +95,34 @@ public class OrderManagementFrame extends JFrame {
         btn.setFocusPainted(false);
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btn.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override public void mouseEntered(java.awt.event.MouseEvent e) { btn.setBackground(hover); }
-            @Override public void mouseExited(java.awt.event.MouseEvent e) { btn.setBackground(bg); }
+            @Override
+            public void mouseEntered(java.awt.event.MouseEvent e) {
+                btn.setBackground(hover);
+            }
+
+            @Override
+            public void mouseExited(java.awt.event.MouseEvent e) {
+                btn.setBackground(bg);
+            }
         });
     }
 
     private void loadOrders() {
         statusLabel.setText("Loading Orders...");
         new SwingWorker<List<Order>, Void>() {
-            @Override protected List<Order> doInBackground() throws Exception {
+            @Override
+            protected List<Order> doInBackground() throws Exception {
                 OrderService svc = new OrderService(new DatabaseManager().getDataSourceWithFallback());
                 return svc.getAllOrders();
             }
-            @Override protected void done() {
+
+            @Override
+            protected void done() {
                 try {
                     List<Order> list = get();
                     tableModel.setRowCount(0);
                     for (Order o : list) {
-                        tableModel.addRow(new Object[]{o.getOrderId(), o.getCustomerId(),
-                                o.getOrderDate(), o.getStatus(), o.getNotes()});
+                        tableModel.addRow(new Object[]{o.getOrderId(), o.getCustomerId(), o.getOrderDate(), o.getStatus(), o.getNotes()});
                     }
                     statusLabel.setText("Loaded " + list.size() + " orders.");
                 } catch (Exception ex) {
@@ -113,32 +136,51 @@ public class OrderManagementFrame extends JFrame {
         Order result = showOrderDialog(null);
         if (result == null) return;
         new SwingWorker<Void, Void>() {
-            @Override protected Void doInBackground() throws Exception {
+            @Override
+            protected Void doInBackground() throws Exception {
                 OrderService svc = new OrderService(new DatabaseManager().getDataSourceWithFallback());
                 svc.createOrder(result, new ArrayList<>());
                 return null;
             }
-            @Override protected void done() {
-                try { get(); statusLabel.setText("Order created."); loadOrders(); }
-                catch (Exception ex) { statusLabel.setText("Failed: " + ex.getMessage()); }
+
+            @Override
+            protected void done() {
+                try {
+                    get();
+                    statusLabel.setText("Order created.");
+                    loadOrders();
+                } catch (Exception ex) {
+                    statusLabel.setText("Failed: " + ex.getMessage());
+                }
             }
         }.execute();
     }
 
     private void editOrder() {
         Order selected = getSelectedOrder();
-        if (selected == null) { statusLabel.setText("Select an Order."); return; }
+        if (selected == null) {
+            statusLabel.setText("Select an Order.");
+            return;
+        }
         Order result = showOrderDialog(selected);
         if (result == null) return;
         new SwingWorker<Void, Void>() {
-            @Override protected Void doInBackground() throws Exception {
+            @Override
+            protected Void doInBackground() throws Exception {
                 OrderService svc = new OrderService(new DatabaseManager().getDataSourceWithFallback());
                 svc.updateOrder(result, new ArrayList<>());
                 return null;
             }
-            @Override protected void done() {
-                try { get(); statusLabel.setText("Order updated."); loadOrders(); }
-                catch (Exception ex) { statusLabel.setText("Failed: " + ex.getMessage()); }
+
+            @Override
+            protected void done() {
+                try {
+                    get();
+                    statusLabel.setText("Order updated.");
+                    loadOrders();
+                } catch (Exception ex) {
+                    statusLabel.setText("Failed: " + ex.getMessage());
+                }
             }
         }.execute();
     }
@@ -166,12 +208,15 @@ public class OrderManagementFrame extends JFrame {
             statusF.setText("Pending");
         }
         JPanel p = new JPanel(new GridLayout(0, 1, 0, 4));
-        p.add(new JLabel("Customer Id")); p.add(custF);
-        p.add(new JLabel("Status")); p.add(statusF);
-        p.add(new JLabel("Notes")); p.add(notesF);
-        if (JOptionPane.showConfirmDialog(this, p, existing == null ? "Create Order" : "Edit Order",
-                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) != JOptionPane.OK_OPTION) return null;
-        
+        p.add(new JLabel("Customer Id"));
+        p.add(custF);
+        p.add(new JLabel("Status"));
+        p.add(statusF);
+        p.add(new JLabel("Notes"));
+        p.add(notesF);
+        if (JOptionPane.showConfirmDialog(this, p, existing == null ? "Create Order" : "Edit Order", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) != JOptionPane.OK_OPTION)
+            return null;
+
         try {
             Order o = existing != null ? existing : new Order();
             o.setCustomerId(Integer.parseInt(custF.getText().trim()));
@@ -183,5 +228,10 @@ public class OrderManagementFrame extends JFrame {
             JOptionPane.showMessageDialog(this, "Invalid input.");
             return null;
         }
+    }
+
+    public static void main(String[] args) {
+        ThemeConfig.install();
+        SwingUtilities.invokeLater(() -> new OrderManagementFrame().setVisible(true));
     }
 }

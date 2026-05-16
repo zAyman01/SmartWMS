@@ -84,20 +84,30 @@ public class BinManagementFrame extends JFrame {
         btn.setFocusPainted(false);
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btn.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override public void mouseEntered(java.awt.event.MouseEvent e) { btn.setBackground(hover); }
-            @Override public void mouseExited(java.awt.event.MouseEvent e) { btn.setBackground(bg); }
+            @Override
+            public void mouseEntered(java.awt.event.MouseEvent e) {
+                btn.setBackground(hover);
+            }
+
+            @Override
+            public void mouseExited(java.awt.event.MouseEvent e) {
+                btn.setBackground(bg);
+            }
         });
     }
 
     private void loadBins() {
         statusLabel.setText("Loading bins...");
         new SwingWorker<List<Bin>, Void>() {
-            @Override protected List<Bin> doInBackground() throws Exception {
+            @Override
+            protected List<Bin> doInBackground() throws Exception {
                 try (BinService svc = new BinService(new DatabaseManager().getDataSourceWithFallback())) {
                     return svc.listAll();
                 }
             }
-            @Override protected void done() {
+
+            @Override
+            protected void done() {
                 try {
                     List<Bin> bins = get();
                     rootNode.removeAllChildren();
@@ -114,8 +124,7 @@ public class BinManagementFrame extends JFrame {
 
     private void buildTreeNodes(DefaultMutableTreeNode parent, Integer parentId, List<Bin> allBins) {
         for (Bin bin : allBins) {
-            if (parentId == null && bin.getParentBinId() == null
-                    || parentId != null && bin.getParentBinId() != null && bin.getParentBinId().equals(parentId)) {
+            if (parentId == null && bin.getParentBinId() == null || parentId != null && bin.getParentBinId() != null && bin.getParentBinId().equals(parentId)) {
                 DefaultMutableTreeNode node = new DefaultMutableTreeNode(bin);
                 parent.add(node);
                 buildTreeNodes(node, bin.getBinId(), allBins);
@@ -144,64 +153,94 @@ public class BinManagementFrame extends JFrame {
 
     private void addBin() {
         DefaultMutableTreeNode parentNode = getSelectedTreeNode();
-        Bin parentBin = parentNode != null && parentNode.getUserObject() instanceof Bin
-                ? (Bin) parentNode.getUserObject() : null;
+        Bin parentBin = parentNode != null && parentNode.getUserObject() instanceof Bin ? (Bin) parentNode.getUserObject() : null;
         Bin bin = showBinDialog(null, parentBin);
         if (bin == null) return;
 
         new SwingWorker<Void, Void>() {
-            @Override protected Void doInBackground() throws Exception {
+            @Override
+            protected Void doInBackground() throws Exception {
                 try (BinService svc = new BinService(new DatabaseManager().getDataSourceWithFallback())) {
                     svc.add(bin);
                 }
                 return null;
             }
-            @Override protected void done() {
-                try { get(); statusLabel.setText("Bin created."); loadBins(); }
-                catch (Exception ex) { statusLabel.setText("Error: " + ex.getMessage()); }
+
+            @Override
+            protected void done() {
+                try {
+                    get();
+                    statusLabel.setText("Bin created.");
+                    loadBins();
+                } catch (Exception ex) {
+                    statusLabel.setText("Error: " + ex.getMessage());
+                }
             }
         }.execute();
     }
 
     private void editBin() {
         Bin selected = getSelectedBin();
-        if (selected == null) { statusLabel.setText("Select a bin."); return; }
+        if (selected == null) {
+            statusLabel.setText("Select a bin.");
+            return;
+        }
         Bin bin = showBinDialog(selected, null);
         if (bin == null) return;
 
         new SwingWorker<Void, Void>() {
-            @Override protected Void doInBackground() throws Exception {
+            @Override
+            protected Void doInBackground() throws Exception {
                 try (BinService svc = new BinService(new DatabaseManager().getDataSourceWithFallback())) {
                     svc.update(bin);
                 }
                 return null;
             }
-            @Override protected void done() {
-                try { get(); statusLabel.setText("Bin updated."); loadBins(); }
-                catch (Exception ex) { statusLabel.setText("Error: " + ex.getMessage()); }
+
+            @Override
+            protected void done() {
+                try {
+                    get();
+                    statusLabel.setText("Bin updated.");
+                    loadBins();
+                } catch (Exception ex) {
+                    statusLabel.setText("Error: " + ex.getMessage());
+                }
             }
         }.execute();
     }
 
     private void deleteBin() {
         Bin selected = getSelectedBin();
-        if (selected == null) { statusLabel.setText("Select a bin."); return; }
+        if (selected == null) {
+            statusLabel.setText("Select a bin.");
+            return;
+        }
         DefaultMutableTreeNode node = getSelectedTreeNode();
         if (node != null && node.getChildCount() > 0) {
-            statusLabel.setText("Cannot delete a bin with children."); return;
+            statusLabel.setText("Cannot delete a bin with children.");
+            return;
         }
-        if (JOptionPane.showConfirmDialog(this, "Delete '" + selected.getName() + "'?",
-                "Confirm delete", JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION) return;
+        if (JOptionPane.showConfirmDialog(this, "Delete '" + selected.getName() + "'?", "Confirm delete", JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION)
+            return;
 
         new SwingWorker<Boolean, Void>() {
-            @Override protected Boolean doInBackground() throws Exception {
+            @Override
+            protected Boolean doInBackground() throws Exception {
                 try (BinService svc = new BinService(new DatabaseManager().getDataSourceWithFallback())) {
                     return svc.delete(selected.getBinId());
                 }
             }
-            @Override protected void done() {
-                try { boolean d = get(); statusLabel.setText(d ? "Deleted." : "Not found."); if (d) loadBins(); }
-                catch (Exception ex) { statusLabel.setText("Error: " + ex.getMessage()); }
+
+            @Override
+            protected void done() {
+                try {
+                    boolean d = get();
+                    statusLabel.setText(d ? "Deleted." : "Not found.");
+                    if (d) loadBins();
+                } catch (Exception ex) {
+                    statusLabel.setText("Error: " + ex.getMessage());
+                }
             }
         }.execute();
     }
@@ -212,7 +251,8 @@ public class BinManagementFrame extends JFrame {
         JTextField weightF = new JTextField(), volumeF = new JTextField(), sortF = new JTextField("0");
 
         if (existing != null) {
-            nameF.setText(existing.getName()); typeBox.setSelectedItem(existing.getBinType());
+            nameF.setText(existing.getName());
+            typeBox.setSelectedItem(existing.getBinType());
             weightF.setText(String.valueOf(existing.getMaxWeightKg()));
             volumeF.setText(String.valueOf(existing.getMaxVolumeM3()));
             sortF.setText(String.valueOf(existing.getSortOrder()));
@@ -221,29 +261,49 @@ public class BinManagementFrame extends JFrame {
         JPanel p = new JPanel(new GridLayout(0, 1, 0, 4));
         if (parent != null) p.add(new JLabel("Parent: " + parent.getName()));
         else if (existing == null) p.add(new JLabel("Parent: (root)"));
-        p.add(new JLabel("Name")); p.add(nameF);
-        p.add(new JLabel("Bin type")); p.add(typeBox);
-        p.add(new JLabel("Max weight (kg)")); p.add(weightF);
-        p.add(new JLabel("Max volume (m\u00B3)")); p.add(volumeF);
-        p.add(new JLabel("Sort order")); p.add(sortF);
+        p.add(new JLabel("Name"));
+        p.add(nameF);
+        p.add(new JLabel("Bin type"));
+        p.add(typeBox);
+        p.add(new JLabel("Max weight (kg)"));
+        p.add(weightF);
+        p.add(new JLabel("Max volume (m\u00B3)"));
+        p.add(volumeF);
+        p.add(new JLabel("Sort order"));
+        p.add(sortF);
 
-        if (JOptionPane.showConfirmDialog(this, p, existing == null ? "Add bin" : "Edit bin",
-                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) != JOptionPane.OK_OPTION) return null;
+        if (JOptionPane.showConfirmDialog(this, p, existing == null ? "Add bin" : "Edit bin", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) != JOptionPane.OK_OPTION)
+            return null;
 
         String name = nameF.getText().trim();
-        if (name.isEmpty()) { JOptionPane.showMessageDialog(this, "Name is required."); return null; }
+        if (name.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Name is required.");
+            return null;
+        }
 
-        double weight, volume; int sortOrder;
+        double weight, volume;
+        int sortOrder;
         try {
             weight = Double.parseDouble(weightF.getText().trim());
             volume = Double.parseDouble(volumeF.getText().trim());
             sortOrder = Integer.parseInt(sortF.getText().trim());
-        } catch (NumberFormatException e) { JOptionPane.showMessageDialog(this, "Invalid numbers."); return null; }
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Invalid numbers.");
+            return null;
+        }
 
         Bin bin = existing != null ? existing : new Bin();
-        bin.setName(name); bin.setBinType((String) typeBox.getSelectedItem());
-        bin.setMaxWeightKg(weight); bin.setMaxVolumeM3(volume); bin.setSortOrder(sortOrder);
+        bin.setName(name);
+        bin.setBinType((String) typeBox.getSelectedItem());
+        bin.setMaxWeightKg(weight);
+        bin.setMaxVolumeM3(volume);
+        bin.setSortOrder(sortOrder);
         if (existing == null) bin.setParentBinId(parent != null ? parent.getBinId() : null);
         return bin;
+    }
+
+    public static void main(String[] args) {
+        ThemeConfig.install();
+        SwingUtilities.invokeLater(() -> new BinManagementFrame().setVisible(true));
     }
 }

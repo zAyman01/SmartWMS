@@ -25,12 +25,13 @@ public class ReceivingFrame extends JFrame {
     private JScrollPane tableScrollPane;
     private JTable linesTable;
     private JLabel statusLabel;
+    private BarcodeScannerPanel scannerPanel;
 
     private final DefaultTableModel tableModel = new DefaultTableModel(
             new Object[]{"PO Line Id", "Product Id", "Ordered", "Received", "To Receive (Input)"}, 0) {
         @Override
         public boolean isCellEditable(int row, int column) {
-            return column == 4; // Only "To Receive" is editable
+            return column == 4;
         }
     };
 
@@ -55,8 +56,33 @@ public class ReceivingFrame extends JFrame {
         applyButtonTheme(fetchButton, ThemeConfig.BG_CARD, ThemeConfig.BG_HOVER);
         applyButtonTheme(receiveButton, ThemeConfig.ACCENT, ThemeConfig.ACCENT_HOVER);
 
+        scannerPanel = new BarcodeScannerPanel();
+        scannerPanel.setParentFrame(this);
+        mainPanel.add(scannerPanel, BorderLayout.NORTH);
+        scannerPanel.setScanListener(this::onBarcodeScan);
+
         fetchButton.addActionListener(e -> fetchLines());
         receiveButton.addActionListener(e -> receiveSelected());
+    }
+
+    private void onBarcodeScan(com.warehousewms.model.Product product) {
+        int pid = product.getProductId();
+        for (int i = 0; i < tableModel.getRowCount(); i++) {
+            int rowPid = (int) tableModel.getValueAt(i, 1);
+            if (rowPid == pid) {
+                int ordered = (int) tableModel.getValueAt(i, 2);
+                int received = (int) tableModel.getValueAt(i, 3);
+                int remaining = ordered - received;
+                if (remaining > 0) {
+                    tableModel.setValueAt(remaining, i, 4);
+                    statusLabel.setText("Scanned: " + product.getSku() + " \u2013 set Qty " + remaining);
+                } else {
+                    statusLabel.setText("Scanned: " + product.getSku() + " (already fully received)");
+                }
+                return;
+            }
+        }
+        statusLabel.setText("Scanned product not in this PO: " + product.getSku());
     }
 
     private void applyButtonTheme(JButton btn, Color bg, Color hover) {
@@ -147,5 +173,10 @@ public class ReceivingFrame extends JFrame {
         } catch (NumberFormatException ex) {
             JOptionPane.showMessageDialog(this, "Invalid Bin Id or Quantity");
         }
+    }
+
+    public static void main(String[] args) {
+        ThemeConfig.install();
+        SwingUtilities.invokeLater(() -> new ReceivingFrame().setVisible(true));
     }
 }

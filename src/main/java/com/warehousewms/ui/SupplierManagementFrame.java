@@ -27,9 +27,11 @@ public class SupplierManagementFrame extends JFrame {
     private JTable supplierTable;
     private JLabel statusLabel;
 
-    private final DefaultTableModel tableModel = new DefaultTableModel(
-            new Object[]{"Id", "Name", "Contact", "Email", "Phone"}, 0) {
-        @Override public boolean isCellEditable(int row, int column) { return false; }
+    private final DefaultTableModel tableModel = new DefaultTableModel(new Object[]{"Id", "Name", "Contact", "Email", "Phone"}, 0) {
+        @Override
+        public boolean isCellEditable(int row, int column) {
+            return false;
+        }
     };
     private final TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(tableModel);
 
@@ -65,9 +67,21 @@ public class SupplierManagementFrame extends JFrame {
                 String t = searchField.getText().trim();
                 sorter.setRowFilter(t.isEmpty() ? null : RowFilter.regexFilter("(?i)" + t));
             }
-            @Override public void insertUpdate(DocumentEvent e) { filter(); }
-            @Override public void removeUpdate(DocumentEvent e) { filter(); }
-            @Override public void changedUpdate(DocumentEvent e) { filter(); }
+
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                filter();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                filter();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                filter();
+            }
         });
 
         // Listeners
@@ -86,26 +100,35 @@ public class SupplierManagementFrame extends JFrame {
         btn.setFocusPainted(false);
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btn.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override public void mouseEntered(java.awt.event.MouseEvent e) { btn.setBackground(hover); }
-            @Override public void mouseExited(java.awt.event.MouseEvent e) { btn.setBackground(bg); }
+            @Override
+            public void mouseEntered(java.awt.event.MouseEvent e) {
+                btn.setBackground(hover);
+            }
+
+            @Override
+            public void mouseExited(java.awt.event.MouseEvent e) {
+                btn.setBackground(bg);
+            }
         });
     }
 
     private void loadSuppliers() {
         statusLabel.setText("Loading suppliers...");
         new SwingWorker<List<Supplier>, Void>() {
-            @Override protected List<Supplier> doInBackground() throws Exception {
+            @Override
+            protected List<Supplier> doInBackground() throws Exception {
                 try (SupplierService svc = new SupplierService(new DatabaseManager().getDataSourceWithFallback())) {
                     return svc.listAll();
                 }
             }
-            @Override protected void done() {
+
+            @Override
+            protected void done() {
                 try {
                     List<Supplier> list = get();
                     tableModel.setRowCount(0);
                     for (Supplier s : list) {
-                        tableModel.addRow(new Object[]{s.getSupplierId(), s.getName(),
-                                s.getContactName(), s.getEmail(), s.getPhone()});
+                        tableModel.addRow(new Object[]{s.getSupplierId(), s.getName(), s.getContactName(), s.getEmail(), s.getPhone()});
                     }
                     statusLabel.setText("Loaded " + list.size() + " suppliers.");
                 } catch (Exception ex) {
@@ -119,55 +142,82 @@ public class SupplierManagementFrame extends JFrame {
         Supplier result = showSupplierDialog(null);
         if (result == null) return;
         new SwingWorker<Void, Void>() {
-            @Override protected Void doInBackground() throws Exception {
+            @Override
+            protected Void doInBackground() throws Exception {
                 try (SupplierService svc = new SupplierService(new DatabaseManager().getDataSourceWithFallback())) {
                     svc.add(result);
                 }
                 return null;
             }
-            @Override protected void done() {
+
+            @Override
+            protected void done() {
                 try {
                     get();
                     statusLabel.setText("Supplier created.");
                     loadSuppliers();
-                } catch (Exception ex) { statusLabel.setText("Failed: " + ex.getMessage()); }
+                } catch (Exception ex) {
+                    statusLabel.setText("Failed: " + ex.getMessage());
+                }
             }
         }.execute();
     }
 
     private void editSupplier() {
         Supplier selected = getSelectedSupplier();
-        if (selected == null) { statusLabel.setText("Select a supplier to edit."); return; }
+        if (selected == null) {
+            statusLabel.setText("Select a supplier to edit.");
+            return;
+        }
         Supplier result = showSupplierDialog(selected);
         if (result == null) return;
         new SwingWorker<Void, Void>() {
-            @Override protected Void doInBackground() throws Exception {
+            @Override
+            protected Void doInBackground() throws Exception {
                 try (SupplierService svc = new SupplierService(new DatabaseManager().getDataSourceWithFallback())) {
                     svc.update(result);
                 }
                 return null;
             }
-            @Override protected void done() {
-                try { get(); statusLabel.setText("Supplier updated."); loadSuppliers(); }
-                catch (Exception ex) { statusLabel.setText("Failed: " + ex.getMessage()); }
+
+            @Override
+            protected void done() {
+                try {
+                    get();
+                    statusLabel.setText("Supplier updated.");
+                    loadSuppliers();
+                } catch (Exception ex) {
+                    statusLabel.setText("Failed: " + ex.getMessage());
+                }
             }
         }.execute();
     }
 
     private void deleteSupplier() {
         Supplier selected = getSelectedSupplier();
-        if (selected == null) { statusLabel.setText("Select a supplier to delete."); return; }
-        if (JOptionPane.showConfirmDialog(this, "Delete '" + selected.getName() + "'?",
-                "Confirm delete", JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION) return;
+        if (selected == null) {
+            statusLabel.setText("Select a supplier to delete.");
+            return;
+        }
+        if (JOptionPane.showConfirmDialog(this, "Delete '" + selected.getName() + "'?", "Confirm delete", JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION)
+            return;
         new SwingWorker<Boolean, Void>() {
-            @Override protected Boolean doInBackground() throws Exception {
+            @Override
+            protected Boolean doInBackground() throws Exception {
                 try (SupplierService svc = new SupplierService(new DatabaseManager().getDataSourceWithFallback())) {
                     return svc.delete(selected.getSupplierId());
                 }
             }
-            @Override protected void done() {
-                try { boolean d = get(); statusLabel.setText(d ? "Deleted." : "Not found."); if (d) loadSuppliers(); }
-                catch (Exception ex) { statusLabel.setText("Failed: " + ex.getMessage()); }
+
+            @Override
+            protected void done() {
+                try {
+                    boolean d = get();
+                    statusLabel.setText(d ? "Deleted." : "Not found.");
+                    if (d) loadSuppliers();
+                } catch (Exception ex) {
+                    statusLabel.setText("Failed: " + ex.getMessage());
+                }
             }
         }.execute();
     }
@@ -189,21 +239,37 @@ public class SupplierManagementFrame extends JFrame {
         JTextField nameF = new JTextField(), contactF = new JTextField();
         JTextField emailF = new JTextField(), phoneF = new JTextField();
         if (existing != null) {
-            nameF.setText(existing.getName()); contactF.setText(existing.getContactName());
-            emailF.setText(existing.getEmail()); phoneF.setText(existing.getPhone());
+            nameF.setText(existing.getName());
+            contactF.setText(existing.getContactName());
+            emailF.setText(existing.getEmail());
+            phoneF.setText(existing.getPhone());
         }
         JPanel p = new JPanel(new GridLayout(0, 1, 0, 4));
-        p.add(new JLabel("Name")); p.add(nameF);
-        p.add(new JLabel("Contact name")); p.add(contactF);
-        p.add(new JLabel("Email")); p.add(emailF);
-        p.add(new JLabel("Phone")); p.add(phoneF);
-        if (JOptionPane.showConfirmDialog(this, p, existing == null ? "Add supplier" : "Edit supplier",
-                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) != JOptionPane.OK_OPTION) return null;
+        p.add(new JLabel("Name"));
+        p.add(nameF);
+        p.add(new JLabel("Contact name"));
+        p.add(contactF);
+        p.add(new JLabel("Email"));
+        p.add(emailF);
+        p.add(new JLabel("Phone"));
+        p.add(phoneF);
+        if (JOptionPane.showConfirmDialog(this, p, existing == null ? "Add supplier" : "Edit supplier", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) != JOptionPane.OK_OPTION)
+            return null;
         String name = nameF.getText().trim();
-        if (name.isEmpty()) { JOptionPane.showMessageDialog(this, "Name is required."); return null; }
+        if (name.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Name is required.");
+            return null;
+        }
         Supplier supplier = existing != null ? existing : new Supplier();
-        supplier.setName(name); supplier.setContactName(contactF.getText().trim());
-        supplier.setEmail(emailF.getText().trim()); supplier.setPhone(phoneF.getText().trim());
+        supplier.setName(name);
+        supplier.setContactName(contactF.getText().trim());
+        supplier.setEmail(emailF.getText().trim());
+        supplier.setPhone(phoneF.getText().trim());
         return supplier;
+    }
+
+    public static void main(String[] args) {
+        ThemeConfig.install();
+        SwingUtilities.invokeLater(() -> new SupplierManagementFrame().setVisible(true));
     }
 }

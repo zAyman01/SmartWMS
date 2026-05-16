@@ -42,9 +42,14 @@ public class OrderRepository {
     }
 
     public void insert(Order order) throws SQLException {
+        try (Connection conn = dataSource.getConnection()) {
+            insert(order, conn);
+        }
+    }
+
+    public void insert(Order order, Connection conn) throws SQLException {
         String sql = "INSERT INTO Orders (CustomerId, OrderDate, ShipByDate, Status, Notes) VALUES (?, ?, ?, ?, ?)";
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setInt(1, order.getCustomerId());
             ps.setTimestamp(2, new Timestamp(order.getOrderDate().getTime()));
             if (order.getShipByDate() != null) ps.setTimestamp(3, new Timestamp(order.getShipByDate().getTime()));
@@ -58,9 +63,14 @@ public class OrderRepository {
     }
 
     public void update(Order order) throws SQLException {
+        try (Connection conn = dataSource.getConnection()) {
+            update(order, conn);
+        }
+    }
+
+    public void update(Order order, Connection conn) throws SQLException {
         String sql = "UPDATE Orders SET CustomerId=?, OrderDate=?, ShipByDate=?, Status=?, Notes=? WHERE OrderId=?";
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, order.getCustomerId());
             ps.setTimestamp(2, new Timestamp(order.getOrderDate().getTime()));
             if (order.getShipByDate() != null) ps.setTimestamp(3, new Timestamp(order.getShipByDate().getTime()));
@@ -87,9 +97,14 @@ public class OrderRepository {
     }
 
     public void insertLine(OrderLine line) throws SQLException {
+        try (Connection conn = dataSource.getConnection()) {
+            insertLine(line, conn);
+        }
+    }
+
+    public void insertLine(OrderLine line, Connection conn) throws SQLException {
         String sql = "INSERT INTO OrderLines (OrderId, ProductId, QuantityOrdered, QuantityPicked, QuantityShipped) VALUES (?, ?, ?, ?, ?)";
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setInt(1, line.getOrderId());
             ps.setInt(2, line.getProductId());
             ps.setInt(3, line.getQuantityOrdered());
@@ -102,9 +117,14 @@ public class OrderRepository {
     }
 
     public void updateLine(OrderLine line) throws SQLException {
+        try (Connection conn = dataSource.getConnection()) {
+            updateLine(line, conn);
+        }
+    }
+
+    public void updateLine(OrderLine line, Connection conn) throws SQLException {
         String sql = "UPDATE OrderLines SET OrderId=?, ProductId=?, QuantityOrdered=?, QuantityPicked=?, QuantityShipped=? WHERE OrderLineId=?";
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, line.getOrderId());
             ps.setInt(2, line.getProductId());
             ps.setInt(3, line.getQuantityOrdered());
@@ -114,7 +134,27 @@ public class OrderRepository {
             ps.executeUpdate();
         }
     }
-    
+
+    public void delete(int orderId) throws SQLException {
+        String sqlLines = "DELETE FROM OrderLines WHERE OrderId=?";
+        String sqlOrder = "DELETE FROM Orders WHERE OrderId=?";
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement psLines = conn.prepareStatement(sqlLines);
+             PreparedStatement psOrder = conn.prepareStatement(sqlOrder)) {
+            conn.setAutoCommit(false);
+            try {
+                psLines.setInt(1, orderId);
+                psLines.executeUpdate();
+                psOrder.setInt(1, orderId);
+                psOrder.executeUpdate();
+                conn.commit();
+            } catch (SQLException e) {
+                conn.rollback();
+                throw e;
+            }
+        }
+    }
+
     public OrderLine findOrderLineById(int orderLineId) throws SQLException {
         String sql = "SELECT OrderLineId, OrderId, ProductId, QuantityOrdered, QuantityPicked, QuantityShipped FROM OrderLines WHERE OrderLineId = ?";
         try (Connection conn = dataSource.getConnection();

@@ -34,13 +34,12 @@ class LoginServiceTest {
 
     @Test
     void loginSuccess() {
-        LoginResult result = loginService.login("admin", "password", false);
+        LoginResult result = loginService.login("admin", "admin123", false);
         assertTrue(result.isSuccess());
         assertNotNull(result.getUser());
         assertEquals("admin", result.getUser().getUsername());
         assertNull(result.getErrorMessage());
 
-        // Verify session is set
         assertNotNull(SessionContext.getCurrentUser());
         assertEquals("admin", SessionContext.getCurrentUser().getUsername());
     }

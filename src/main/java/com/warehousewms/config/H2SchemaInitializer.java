@@ -1,7 +1,10 @@
 package com.warehousewms.config;
 
+import com.warehousewms.repository.UserRepository;
+
 import javax.sql.DataSource;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 
@@ -39,7 +42,8 @@ public class H2SchemaInitializer {
                             + "ImagePath VARCHAR(500) NULL, "
                             + "UnitWeightKg DECIMAL(10,3) NOT NULL DEFAULT 0, "
                             + "UnitVolumeM3 DECIMAL(10,6) NOT NULL DEFAULT 0, "
-                            + "IsActive BOOLEAN NOT NULL DEFAULT TRUE"
+                            + "IsActive BOOLEAN NOT NULL DEFAULT TRUE, "
+                            + "Barcode VARCHAR(100) NULL"
                             + ")"
             );
 
@@ -202,6 +206,7 @@ public class H2SchemaInitializer {
                             + ")"
             );
 
+            stmt.executeUpdate("CREATE INDEX IF NOT EXISTS IX_Products_Barcode ON Products(Barcode)");
             stmt.executeUpdate("CREATE INDEX IF NOT EXISTS IX_Inventory_ProductId ON Inventory(ProductId)");
             stmt.executeUpdate("CREATE INDEX IF NOT EXISTS IX_Inventory_BinId ON Inventory(BinId)");
             stmt.executeUpdate("CREATE INDEX IF NOT EXISTS IX_OrderLines_OrderId ON OrderLines(OrderId)");
@@ -209,11 +214,15 @@ public class H2SchemaInitializer {
             stmt.executeUpdate("CREATE INDEX IF NOT EXISTS IX_PickRunItems_PickRunId ON PickRunItems(PickRunId)");
             stmt.executeUpdate("CREATE INDEX IF NOT EXISTS IX_AuditLog_Table_Record ON AuditLog(TableName, RecordId)");
 
-            stmt.executeUpdate(
-                    "MERGE INTO Users (Username, PasswordHash, FullName, Role) KEY(Username) "
-                            + "VALUES ('admin', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', "
-                            + "'System Administrator', 'Admin')"
-            );
+            String adminHash = UserRepository.hashPassword("admin123");
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "MERGE INTO Users (Username, PasswordHash, FullName, Role) KEY(Username) VALUES (?, ?, ?, ?)")) {
+                ps.setString(1, "admin");
+                ps.setString(2, adminHash);
+                ps.setString(3, "System Administrator");
+                ps.setString(4, "Admin");
+                ps.executeUpdate();
+            }
         }
     }
 }

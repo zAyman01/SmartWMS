@@ -72,4 +72,9 @@ public class BackupFrame extends JFrame {
             }
         }.execute();
     }
+
+    public static void main(String[] args) {
+        ThemeConfig.install();
+        SwingUtilities.invokeLater(() -> new BackupFrame().setVisible(true));
+    }
 }

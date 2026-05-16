@@ -44,9 +44,14 @@ public class PurchaseOrderRepository {
     }
 
     public void insert(PurchaseOrder po) throws SQLException {
+        try (Connection conn = dataSource.getConnection()) {
+            insert(po, conn);
+        }
+    }
+
+    public void insert(PurchaseOrder po, Connection conn) throws SQLException {
         String sql = "INSERT INTO PurchaseOrders (SupplierId, OrderDate, Status, Notes) VALUES (?, ?, ?, ?)";
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setInt(1, po.getSupplierId());
             ps.setTimestamp(2, new Timestamp(po.getOrderDate().getTime()));
             ps.setString(3, po.getStatus());
@@ -58,15 +63,40 @@ public class PurchaseOrderRepository {
     }
 
     public void update(PurchaseOrder po) throws SQLException {
+        try (Connection conn = dataSource.getConnection()) {
+            update(po, conn);
+        }
+    }
+
+    public void update(PurchaseOrder po, Connection conn) throws SQLException {
         String sql = "UPDATE PurchaseOrders SET SupplierId=?, OrderDate=?, Status=?, Notes=? WHERE POId=?";
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, po.getSupplierId());
             ps.setTimestamp(2, new Timestamp(po.getOrderDate().getTime()));
             ps.setString(3, po.getStatus());
             ps.setString(4, po.getNotes());
             ps.setInt(5, po.getPoId());
             ps.executeUpdate();
+        }
+    }
+
+    public void delete(int poId) throws SQLException {
+        String sqlLines = "DELETE FROM PurchaseOrderLines WHERE POId=?";
+        String sqlPO = "DELETE FROM PurchaseOrders WHERE POId=?";
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement psLines = conn.prepareStatement(sqlLines);
+             PreparedStatement psPO = conn.prepareStatement(sqlPO)) {
+            conn.setAutoCommit(false);
+            try {
+                psLines.setInt(1, poId);
+                psLines.executeUpdate();
+                psPO.setInt(1, poId);
+                psPO.executeUpdate();
+                conn.commit();
+            } catch (SQLException e) {
+                conn.rollback();
+                throw e;
+            }
         }
     }
 
@@ -87,9 +117,14 @@ public class PurchaseOrderRepository {
     }
 
     public void insertLine(PurchaseOrderLine line) throws SQLException {
+        try (Connection conn = dataSource.getConnection()) {
+            insertLine(line, conn);
+        }
+    }
+
+    public void insertLine(PurchaseOrderLine line, Connection conn) throws SQLException {
         String sql = "INSERT INTO PurchaseOrderLines (POId, ProductId, QuantityOrdered, QuantityReceived) VALUES (?, ?, ?, ?)";
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setInt(1, line.getPoId());
             ps.setInt(2, line.getProductId());
             ps.setInt(3, line.getQuantityOrdered());
@@ -101,9 +136,14 @@ public class PurchaseOrderRepository {
     }
 
     public void updateLine(PurchaseOrderLine line) throws SQLException {
+        try (Connection conn = dataSource.getConnection()) {
+            updateLine(line, conn);
+        }
+    }
+
+    public void updateLine(PurchaseOrderLine line, Connection conn) throws SQLException {
         String sql = "UPDATE PurchaseOrderLines SET POId=?, ProductId=?, QuantityOrdered=?, QuantityReceived=? WHERE POLineId=?";
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, line.getPoId());
             ps.setInt(2, line.getProductId());
             ps.setInt(3, line.getQuantityOrdered());

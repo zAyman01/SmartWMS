@@ -42,9 +42,14 @@ public class ReceiptRepository {
     }
 
     public void insert(Receipt receipt) throws SQLException {
+        try (Connection conn = dataSource.getConnection()) {
+            insert(receipt, conn);
+        }
+    }
+
+    public void insert(Receipt receipt, Connection conn) throws SQLException {
         String sql = "INSERT INTO Receipts (POId, ReceiptDate, Status, Notes) VALUES (?, ?, ?, ?)";
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             if (receipt.getPoId() != null) ps.setInt(1, receipt.getPoId());
             else ps.setNull(1, Types.INTEGER);
             ps.setTimestamp(2, new Timestamp(receipt.getReceiptDate().getTime()));
@@ -71,9 +76,14 @@ public class ReceiptRepository {
     }
 
     public void insertLine(ReceiptLine line) throws SQLException {
+        try (Connection conn = dataSource.getConnection()) {
+            insertLine(line, conn);
+        }
+    }
+
+    public void insertLine(ReceiptLine line, Connection conn) throws SQLException {
         String sql = "INSERT INTO ReceiptLines (ReceiptId, ProductId, BinId, Quantity, LotNumber, ExpiryDate) VALUES (?, ?, ?, ?, ?, ?)";
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setInt(1, line.getReceiptId());
             ps.setInt(2, line.getProductId());
             ps.setInt(3, line.getBinId());

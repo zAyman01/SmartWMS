@@ -27,9 +27,11 @@ public class ProductManagementFrame extends JFrame {
     private JTable productTable;
     private JLabel statusLabel;
 
-    private final DefaultTableModel tableModel = new DefaultTableModel(
-            new Object[]{"Id", "SKU", "Name", "Weight (kg)", "Volume (m\u00B3)", "Active"}, 0) {
-        @Override public boolean isCellEditable(int row, int column) { return false; }
+    private final DefaultTableModel tableModel = new DefaultTableModel(new Object[]{"Id", "SKU", "Name", "Weight (kg)", "Volume (m\u00B3)", "Active"}, 0) {
+        @Override
+        public boolean isCellEditable(int row, int column) {
+            return false;
+        }
     };
     private final TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(tableModel);
 
@@ -65,9 +67,21 @@ public class ProductManagementFrame extends JFrame {
                 String t = searchField.getText().trim();
                 sorter.setRowFilter(t.isEmpty() ? null : RowFilter.regexFilter("(?i)" + t));
             }
-            @Override public void insertUpdate(DocumentEvent e) { filter(); }
-            @Override public void removeUpdate(DocumentEvent e) { filter(); }
-            @Override public void changedUpdate(DocumentEvent e) { filter(); }
+
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                filter();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                filter();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                filter();
+            }
         });
 
         // Listeners
@@ -86,26 +100,35 @@ public class ProductManagementFrame extends JFrame {
         btn.setFocusPainted(false);
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btn.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override public void mouseEntered(java.awt.event.MouseEvent e) { btn.setBackground(hover); }
-            @Override public void mouseExited(java.awt.event.MouseEvent e) { btn.setBackground(bg); }
+            @Override
+            public void mouseEntered(java.awt.event.MouseEvent e) {
+                btn.setBackground(hover);
+            }
+
+            @Override
+            public void mouseExited(java.awt.event.MouseEvent e) {
+                btn.setBackground(bg);
+            }
         });
     }
 
     private void loadProducts() {
         statusLabel.setText("Loading products...");
         new SwingWorker<List<Product>, Void>() {
-            @Override protected List<Product> doInBackground() throws Exception {
+            @Override
+            protected List<Product> doInBackground() throws Exception {
                 try (ProductService svc = new ProductService(new DatabaseManager().getDataSourceWithFallback())) {
                     return svc.listAll();
                 }
             }
-            @Override protected void done() {
+
+            @Override
+            protected void done() {
                 try {
                     List<Product> list = get();
                     tableModel.setRowCount(0);
                     for (Product p : list) {
-                        tableModel.addRow(new Object[]{p.getProductId(), p.getSku(), p.getName(),
-                                p.getUnitWeightKg(), p.getUnitVolumeM3(), p.isActive() ? "Yes" : "No"});
+                        tableModel.addRow(new Object[]{p.getProductId(), p.getSku(), p.getName(), p.getUnitWeightKg(), p.getUnitVolumeM3(), p.isActive() ? "Yes" : "No"});
                     }
                     statusLabel.setText("Loaded " + list.size() + " products.");
                 } catch (Exception ex) {
@@ -119,30 +142,42 @@ public class ProductManagementFrame extends JFrame {
         Product result = showProductDialog(null);
         if (result == null) return;
         new SwingWorker<Boolean, Void>() {
-            @Override protected Boolean doInBackground() throws Exception {
+            @Override
+            protected Boolean doInBackground() throws Exception {
                 try (ProductService svc = new ProductService(new DatabaseManager().getDataSourceWithFallback())) {
                     if (svc.skuExists(result.getSku())) return false;
                     svc.add(result);
                     return true;
                 }
             }
-            @Override protected void done() {
+
+            @Override
+            protected void done() {
                 try {
-                    if (!get()) { statusLabel.setText("SKU already exists."); return; }
+                    if (!get()) {
+                        statusLabel.setText("SKU already exists.");
+                        return;
+                    }
                     statusLabel.setText("Product created.");
                     loadProducts();
-                } catch (Exception ex) { statusLabel.setText("Failed: " + ex.getMessage()); }
+                } catch (Exception ex) {
+                    statusLabel.setText("Failed: " + ex.getMessage());
+                }
             }
         }.execute();
     }
 
     private void editProduct() {
         Product selected = getSelectedProduct();
-        if (selected == null) { statusLabel.setText("Select a product to edit."); return; }
+        if (selected == null) {
+            statusLabel.setText("Select a product to edit.");
+            return;
+        }
         Product result = showProductDialog(selected);
         if (result == null) return;
         new SwingWorker<Void, Void>() {
-            @Override protected Void doInBackground() throws Exception {
+            @Override
+            protected Void doInBackground() throws Exception {
                 try (ProductService svc = new ProductService(new DatabaseManager().getDataSourceWithFallback())) {
                     if (!selected.getSku().equals(result.getSku()) && svc.skuExists(result.getSku()))
                         throw new IllegalArgumentException("SKU already exists.");
@@ -150,27 +185,45 @@ public class ProductManagementFrame extends JFrame {
                 }
                 return null;
             }
-            @Override protected void done() {
-                try { get(); statusLabel.setText("Product updated."); loadProducts(); }
-                catch (Exception ex) { statusLabel.setText("Failed: " + ex.getMessage()); }
+
+            @Override
+            protected void done() {
+                try {
+                    get();
+                    statusLabel.setText("Product updated.");
+                    loadProducts();
+                } catch (Exception ex) {
+                    statusLabel.setText("Failed: " + ex.getMessage());
+                }
             }
         }.execute();
     }
 
     private void deleteProduct() {
         Product selected = getSelectedProduct();
-        if (selected == null) { statusLabel.setText("Select a product to delete."); return; }
-        if (JOptionPane.showConfirmDialog(this, "Delete '" + selected.getName() + "'?",
-                "Confirm delete", JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION) return;
+        if (selected == null) {
+            statusLabel.setText("Select a product to delete.");
+            return;
+        }
+        if (JOptionPane.showConfirmDialog(this, "Delete '" + selected.getName() + "'?", "Confirm delete", JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION)
+            return;
         new SwingWorker<Boolean, Void>() {
-            @Override protected Boolean doInBackground() throws Exception {
+            @Override
+            protected Boolean doInBackground() throws Exception {
                 try (ProductService svc = new ProductService(new DatabaseManager().getDataSourceWithFallback())) {
                     return svc.delete(selected.getProductId());
                 }
             }
-            @Override protected void done() {
-                try { boolean d = get(); statusLabel.setText(d ? "Deleted." : "Not found."); if (d) loadProducts(); }
-                catch (Exception ex) { statusLabel.setText("Failed: " + ex.getMessage()); }
+
+            @Override
+            protected void done() {
+                try {
+                    boolean d = get();
+                    statusLabel.setText(d ? "Deleted." : "Not found.");
+                    if (d) loadProducts();
+                } catch (Exception ex) {
+                    statusLabel.setText("Failed: " + ex.getMessage());
+                }
             }
         }.execute();
     }
@@ -194,27 +247,49 @@ public class ProductManagementFrame extends JFrame {
         JTextField weightF = new JTextField(), volumeF = new JTextField();
         JCheckBox activeBox = new JCheckBox("Active", true);
         if (existing != null) {
-            skuF.setText(existing.getSku()); nameF.setText(existing.getName());
+            skuF.setText(existing.getSku());
+            nameF.setText(existing.getName());
             weightF.setText(String.valueOf(existing.getUnitWeightKg()));
             volumeF.setText(String.valueOf(existing.getUnitVolumeM3()));
             activeBox.setSelected(existing.isActive());
         }
         JPanel p = new JPanel(new GridLayout(0, 1, 0, 4));
-        p.add(new JLabel("SKU")); p.add(skuF);
-        p.add(new JLabel("Name")); p.add(nameF);
-        p.add(new JLabel("Unit weight (kg)")); p.add(weightF);
-        p.add(new JLabel("Unit volume (m\u00B3)")); p.add(volumeF);
+        p.add(new JLabel("SKU"));
+        p.add(skuF);
+        p.add(new JLabel("Name"));
+        p.add(nameF);
+        p.add(new JLabel("Unit weight (kg)"));
+        p.add(weightF);
+        p.add(new JLabel("Unit volume (m\u00B3)"));
+        p.add(volumeF);
         p.add(activeBox);
-        if (JOptionPane.showConfirmDialog(this, p, existing == null ? "Add product" : "Edit product",
-                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) != JOptionPane.OK_OPTION) return null;
+        if (JOptionPane.showConfirmDialog(this, p, existing == null ? "Add product" : "Edit product", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) != JOptionPane.OK_OPTION)
+            return null;
         String sku = skuF.getText().trim(), name = nameF.getText().trim();
-        if (sku.isEmpty() || name.isEmpty()) { JOptionPane.showMessageDialog(this, "SKU and name required."); return null; }
+        if (sku.isEmpty() || name.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "SKU and name required.");
+            return null;
+        }
         double weight, volume;
-        try { weight = Double.parseDouble(weightF.getText().trim()); volume = Double.parseDouble(volumeF.getText().trim()); }
-        catch (NumberFormatException e) { JOptionPane.showMessageDialog(this, "Invalid numbers."); return null; }
+        try {
+            weight = Double.parseDouble(weightF.getText().trim());
+            volume = Double.parseDouble(volumeF.getText().trim());
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Invalid numbers.");
+            return null;
+        }
         Product product = existing != null ? existing : new Product();
-        product.setSku(sku); product.setName(name); product.setImagePath(null);
-        product.setUnitWeightKg(weight); product.setUnitVolumeM3(volume); product.setActive(activeBox.isSelected());
+        product.setSku(sku);
+        product.setName(name);
+        product.setImagePath(null);
+        product.setUnitWeightKg(weight);
+        product.setUnitVolumeM3(volume);
+        product.setActive(activeBox.isSelected());
         return product;
+    }
+
+    public static void main(String[] args) {
+        ThemeConfig.install();
+        SwingUtilities.invokeLater(() -> new ProductManagementFrame().setVisible(true));
     }
 }

@@ -103,4 +103,9 @@ public class AnalyticsFrame extends JFrame {
             }
         }.execute();
     }
+
+    public static void main(String[] args) {
+        ThemeConfig.install();
+        SwingUtilities.invokeLater(() -> new AnalyticsFrame().setVisible(true));
+    }
 }

@@ -25,6 +25,10 @@ public class ProductService implements AutoCloseable {
         return productRepo.findById(id);
     }
 
+    public Product findByBarcode(String barcode) throws Exception {
+        return productRepo.findByBarcode(barcode);
+    }
+
     public boolean skuExists(String sku) throws Exception {
         return productRepo.skuExists(sku);
     }

@@ -2,15 +2,16 @@ package com.warehousewms.repository;
 
 import com.warehousewms.model.User;
 
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
 import javax.sql.DataSource;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HexFormat;
+import java.util.Base64;
 import java.util.List;
 
 public class UserRepository {
@@ -28,7 +29,7 @@ public class UserRepository {
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
                 String hash = rs.getString("PasswordHash");
-                if (hash.equals(hashPassword(password))) {
+                if (checkPassword(password, hash)) {
                     User user = new User();
                     user.setUserId(rs.getInt("UserId"));
                     user.setUsername(rs.getString("Username"));
@@ -73,12 +74,16 @@ public class UserRepository {
     public void insertUser(User user) throws SQLException {
         String sql = "INSERT INTO Users (Username, PasswordHash, FullName, Role) VALUES (?, ?, ?, ?)";
         try (Connection conn = dataSource.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+             PreparedStatement ps = conn.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, user.getUsername());
             ps.setString(2, hashPassword(user.getPasswordHash()));
             ps.setString(3, user.getFullName());
             ps.setString(4, user.getRole());
             ps.executeUpdate();
+            ResultSet rs = ps.getGeneratedKeys();
+            if (rs.next()) {
+                user.setUserId(rs.getInt(1));
+            }
         }
     }
 
@@ -142,11 +147,34 @@ public class UserRepository {
 
     public static String hashPassword(String password) {
         try {
-            MessageDigest md = MessageDigest.getInstance("SHA-256");
-            byte[] hash = md.digest(password.getBytes());
-            return HexFormat.of().formatHex(hash);
-        } catch (NoSuchAlgorithmException e) {
+            byte[] salt = new byte[16];
+            SecureRandom random = new SecureRandom();
+            random.nextBytes(salt);
+            PBEKeySpec spec = new PBEKeySpec(password.toCharArray(), salt, 10000, 256);
+            SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+            byte[] hash = factory.generateSecret(spec).getEncoded();
+            return Base64.getEncoder().encodeToString(salt) + ":" + Base64.getEncoder().encodeToString(hash);
+        } catch (Exception e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    public static boolean checkPassword(String password, String storedHash) {
+        try {
+            String[] parts = storedHash.split(":");
+            if (parts.length != 2) return false;
+            byte[] salt = Base64.getDecoder().decode(parts[0]);
+            byte[] expectedHash = Base64.getDecoder().decode(parts[1]);
+            PBEKeySpec spec = new PBEKeySpec(password.toCharArray(), salt, 10000, 256);
+            SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+            byte[] actualHash = factory.generateSecret(spec).getEncoded();
+            if (expectedHash.length != actualHash.length) return false;
+            for (int i = 0; i < expectedHash.length; i++) {
+                if (expectedHash[i] != actualHash[i]) return false;
+            }
+            return true;
+        } catch (Exception e) {
+            return false;
         }
     }
 }

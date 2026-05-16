@@ -31,9 +31,14 @@ public class InventoryRepository {
     }
 
     public Inventory findByProductAndBin(int productId, int binId) throws SQLException {
+        try (Connection conn = dataSource.getConnection()) {
+            return findByProductAndBin(productId, binId, conn);
+        }
+    }
+
+    public Inventory findByProductAndBin(int productId, int binId, Connection conn) throws SQLException {
         String sql = "SELECT InventoryId, ProductId, BinId, Quantity, LotNumber, ExpiryDate FROM Inventory WHERE ProductId = ? AND BinId = ?";
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, productId);
             ps.setInt(2, binId);
             ResultSet rs = ps.executeQuery();
@@ -72,9 +77,14 @@ public class InventoryRepository {
     }
 
     public void insert(Inventory inv) throws SQLException {
+        try (Connection conn = dataSource.getConnection()) {
+            insert(inv, conn);
+        }
+    }
+
+    public void insert(Inventory inv, Connection conn) throws SQLException {
         String sql = "INSERT INTO Inventory (ProductId, BinId, Quantity, LotNumber, ExpiryDate) VALUES (?, ?, ?, ?, ?)";
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS)) {
             ps.setInt(1, inv.getProductId());
             ps.setInt(2, inv.getBinId());
             ps.setInt(3, inv.getQuantity());
@@ -93,9 +103,14 @@ public class InventoryRepository {
     }
 
     public void update(Inventory inv) throws SQLException {
+        try (Connection conn = dataSource.getConnection()) {
+            update(inv, conn);
+        }
+    }
+
+    public void update(Inventory inv, Connection conn) throws SQLException {
         String sql = "UPDATE Inventory SET ProductId = ?, BinId = ?, Quantity = ?, LotNumber = ?, ExpiryDate = ? WHERE InventoryId = ?";
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, inv.getProductId());
             ps.setInt(2, inv.getBinId());
             ps.setInt(3, inv.getQuantity());

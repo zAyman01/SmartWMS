@@ -6,14 +6,17 @@ import com.warehousewms.repository.AuditLogRepository;
 import com.warehousewms.repository.InventoryRepository;
 
 import javax.sql.DataSource;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 
 public class InventoryService {
+    private final DataSource dataSource;
     private final InventoryRepository invRepo;
     private final AuditLogRepository auditRepo;
 
     public InventoryService(DataSource dataSource) {
+        this.dataSource = dataSource;
         this.invRepo = new InventoryRepository(dataSource);
         this.auditRepo = new AuditLogRepository(dataSource);
     }
@@ -32,11 +35,11 @@ public class InventoryService {
         if (inv != null) {
             oldVal = inv.getQuantity();
             newVal = oldVal + quantityDelta;
-            if (newVal < 0) newVal = 0; // Prevent negative stock
+            if (newVal < 0) newVal = 0;
             inv.setQuantity(newVal);
             invRepo.update(inv);
         } else {
-            if (quantityDelta < 0) return; // Cannot adjust below zero if it doesn't exist
+            if (quantityDelta < 0) return;
             inv = new Inventory();
             inv.setProductId(productId);
             inv.setBinId(binId);
@@ -50,32 +53,44 @@ public class InventoryService {
     public void transferStock(int productId, int fromBinId, int toBinId, int quantity, int userId) throws SQLException {
         if (quantity <= 0) return;
 
-        Inventory fromInv = invRepo.findByProductAndBin(productId, fromBinId);
-        if (fromInv == null || fromInv.getQuantity() < quantity) {
-            throw new SQLException("Insufficient stock to transfer");
-        }
+        Connection conn = dataSource.getConnection();
+        try {
+            conn.setAutoCommit(false);
 
-        // Deduct from source
-        int oldFrom = fromInv.getQuantity();
-        fromInv.setQuantity(oldFrom - quantity);
-        invRepo.update(fromInv);
-        logAudit("Inventory", fromInv.getInventoryId(), "UPDATE", "Quantity", String.valueOf(oldFrom), String.valueOf(fromInv.getQuantity()), userId);
+            Inventory fromInv = invRepo.findByProductAndBin(productId, fromBinId, conn);
+            if (fromInv == null || fromInv.getQuantity() < quantity) {
+                throw new SQLException("Insufficient stock to transfer");
+            }
 
-        // Add to destination
-        Inventory toInv = invRepo.findByProductAndBin(productId, toBinId);
-        int oldTo = 0;
-        if (toInv != null) {
-            oldTo = toInv.getQuantity();
-            toInv.setQuantity(oldTo + quantity);
-            invRepo.update(toInv);
-        } else {
-            toInv = new Inventory();
-            toInv.setProductId(productId);
-            toInv.setBinId(toBinId);
-            toInv.setQuantity(quantity);
-            invRepo.insert(toInv);
+            int oldFrom = fromInv.getQuantity();
+            fromInv.setQuantity(oldFrom - quantity);
+            invRepo.update(fromInv, conn);
+            logAudit("Inventory", fromInv.getInventoryId(), "UPDATE", "Quantity",
+                    String.valueOf(oldFrom), String.valueOf(fromInv.getQuantity()), userId, conn);
+
+            Inventory toInv = invRepo.findByProductAndBin(productId, toBinId, conn);
+            int oldTo = 0;
+            if (toInv != null) {
+                oldTo = toInv.getQuantity();
+                toInv.setQuantity(oldTo + quantity);
+                invRepo.update(toInv, conn);
+            } else {
+                toInv = new Inventory();
+                toInv.setProductId(productId);
+                toInv.setBinId(toBinId);
+                toInv.setQuantity(quantity);
+                invRepo.insert(toInv, conn);
+            }
+            logAudit("Inventory", toInv.getInventoryId(), "UPDATE", "Quantity",
+                    String.valueOf(oldTo), String.valueOf(toInv.getQuantity()), userId, conn);
+
+            conn.commit();
+        } catch (SQLException e) {
+            conn.rollback();
+            throw e;
+        } finally {
+            conn.close();
         }
-        logAudit("Inventory", toInv.getInventoryId(), "UPDATE", "Quantity", String.valueOf(oldTo), String.valueOf(toInv.getQuantity()), userId);
     }
 
     private void logAudit(String table, int recordId, String action, String col, String oldV, String newV, int userId) throws SQLException {
@@ -88,5 +103,17 @@ public class InventoryService {
         log.setNewValue(newV);
         log.setChangedByUserId(userId);
         auditRepo.insert(log);
+    }
+
+    private void logAudit(String table, int recordId, String action, String col, String oldV, String newV, int userId, Connection conn) throws SQLException {
+        AuditLog log = new AuditLog();
+        log.setTableName(table);
+        log.setRecordId(recordId);
+        log.setActionType(action);
+        log.setColumnName(col);
+        log.setOldValue(oldV);
+        log.setNewValue(newV);
+        log.setChangedByUserId(userId);
+        auditRepo.insert(log, conn);
     }
 }

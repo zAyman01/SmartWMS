@@ -27,9 +27,11 @@ public class CustomerManagementFrame extends JFrame {
     private JTable customerTable;
     private JLabel statusLabel;
 
-    private final DefaultTableModel tableModel = new DefaultTableModel(
-            new Object[]{"Id", "Name", "Contact", "Email", "Phone"}, 0) {
-        @Override public boolean isCellEditable(int row, int column) { return false; }
+    private final DefaultTableModel tableModel = new DefaultTableModel(new Object[]{"Id", "Name", "Contact", "Email", "Phone"}, 0) {
+        @Override
+        public boolean isCellEditable(int row, int column) {
+            return false;
+        }
     };
     private final TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(tableModel);
 
@@ -65,9 +67,21 @@ public class CustomerManagementFrame extends JFrame {
                 String t = searchField.getText().trim();
                 sorter.setRowFilter(t.isEmpty() ? null : RowFilter.regexFilter("(?i)" + t));
             }
-            @Override public void insertUpdate(DocumentEvent e) { filter(); }
-            @Override public void removeUpdate(DocumentEvent e) { filter(); }
-            @Override public void changedUpdate(DocumentEvent e) { filter(); }
+
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                filter();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                filter();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                filter();
+            }
         });
 
         // Listeners
@@ -86,26 +100,35 @@ public class CustomerManagementFrame extends JFrame {
         btn.setFocusPainted(false);
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btn.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override public void mouseEntered(java.awt.event.MouseEvent e) { btn.setBackground(hover); }
-            @Override public void mouseExited(java.awt.event.MouseEvent e) { btn.setBackground(bg); }
+            @Override
+            public void mouseEntered(java.awt.event.MouseEvent e) {
+                btn.setBackground(hover);
+            }
+
+            @Override
+            public void mouseExited(java.awt.event.MouseEvent e) {
+                btn.setBackground(bg);
+            }
         });
     }
 
     private void loadCustomers() {
         statusLabel.setText("Loading customers...");
         new SwingWorker<List<Customer>, Void>() {
-            @Override protected List<Customer> doInBackground() throws Exception {
+            @Override
+            protected List<Customer> doInBackground() throws Exception {
                 try (CustomerService svc = new CustomerService(new DatabaseManager().getDataSourceWithFallback())) {
                     return svc.listAll();
                 }
             }
-            @Override protected void done() {
+
+            @Override
+            protected void done() {
                 try {
                     List<Customer> list = get();
                     tableModel.setRowCount(0);
                     for (Customer c : list) {
-                        tableModel.addRow(new Object[]{c.getCustomerId(), c.getName(),
-                                c.getContactName(), c.getEmail(), c.getPhone()});
+                        tableModel.addRow(new Object[]{c.getCustomerId(), c.getName(), c.getContactName(), c.getEmail(), c.getPhone()});
                     }
                     statusLabel.setText("Loaded " + list.size() + " customers.");
                 } catch (Exception ex) {
@@ -119,55 +142,82 @@ public class CustomerManagementFrame extends JFrame {
         Customer result = showCustomerDialog(null);
         if (result == null) return;
         new SwingWorker<Void, Void>() {
-            @Override protected Void doInBackground() throws Exception {
+            @Override
+            protected Void doInBackground() throws Exception {
                 try (CustomerService svc = new CustomerService(new DatabaseManager().getDataSourceWithFallback())) {
                     svc.add(result);
                 }
                 return null;
             }
-            @Override protected void done() {
+
+            @Override
+            protected void done() {
                 try {
                     get();
                     statusLabel.setText("Customer created.");
                     loadCustomers();
-                } catch (Exception ex) { statusLabel.setText("Failed: " + ex.getMessage()); }
+                } catch (Exception ex) {
+                    statusLabel.setText("Failed: " + ex.getMessage());
+                }
             }
         }.execute();
     }
 
     private void editCustomer() {
         Customer selected = getSelectedCustomer();
-        if (selected == null) { statusLabel.setText("Select a customer to edit."); return; }
+        if (selected == null) {
+            statusLabel.setText("Select a customer to edit.");
+            return;
+        }
         Customer result = showCustomerDialog(selected);
         if (result == null) return;
         new SwingWorker<Void, Void>() {
-            @Override protected Void doInBackground() throws Exception {
+            @Override
+            protected Void doInBackground() throws Exception {
                 try (CustomerService svc = new CustomerService(new DatabaseManager().getDataSourceWithFallback())) {
                     svc.update(result);
                 }
                 return null;
             }
-            @Override protected void done() {
-                try { get(); statusLabel.setText("Customer updated."); loadCustomers(); }
-                catch (Exception ex) { statusLabel.setText("Failed: " + ex.getMessage()); }
+
+            @Override
+            protected void done() {
+                try {
+                    get();
+                    statusLabel.setText("Customer updated.");
+                    loadCustomers();
+                } catch (Exception ex) {
+                    statusLabel.setText("Failed: " + ex.getMessage());
+                }
             }
         }.execute();
     }
 
     private void deleteCustomer() {
         Customer selected = getSelectedCustomer();
-        if (selected == null) { statusLabel.setText("Select a customer to delete."); return; }
-        if (JOptionPane.showConfirmDialog(this, "Delete '" + selected.getName() + "'?",
-                "Confirm delete", JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION) return;
+        if (selected == null) {
+            statusLabel.setText("Select a customer to delete.");
+            return;
+        }
+        if (JOptionPane.showConfirmDialog(this, "Delete '" + selected.getName() + "'?", "Confirm delete", JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION)
+            return;
         new SwingWorker<Boolean, Void>() {
-            @Override protected Boolean doInBackground() throws Exception {
+            @Override
+            protected Boolean doInBackground() throws Exception {
                 try (CustomerService svc = new CustomerService(new DatabaseManager().getDataSourceWithFallback())) {
                     return svc.delete(selected.getCustomerId());
                 }
             }
-            @Override protected void done() {
-                try { boolean d = get(); statusLabel.setText(d ? "Deleted." : "Not found."); if (d) loadCustomers(); }
-                catch (Exception ex) { statusLabel.setText("Failed: " + ex.getMessage()); }
+
+            @Override
+            protected void done() {
+                try {
+                    boolean d = get();
+                    statusLabel.setText(d ? "Deleted." : "Not found.");
+                    if (d) loadCustomers();
+                } catch (Exception ex) {
+                    statusLabel.setText("Failed: " + ex.getMessage());
+                }
             }
         }.execute();
     }
@@ -189,21 +239,37 @@ public class CustomerManagementFrame extends JFrame {
         JTextField nameF = new JTextField(), contactF = new JTextField();
         JTextField emailF = new JTextField(), phoneF = new JTextField();
         if (existing != null) {
-            nameF.setText(existing.getName()); contactF.setText(existing.getContactName());
-            emailF.setText(existing.getEmail()); phoneF.setText(existing.getPhone());
+            nameF.setText(existing.getName());
+            contactF.setText(existing.getContactName());
+            emailF.setText(existing.getEmail());
+            phoneF.setText(existing.getPhone());
         }
         JPanel p = new JPanel(new GridLayout(0, 1, 0, 4));
-        p.add(new JLabel("Name")); p.add(nameF);
-        p.add(new JLabel("Contact name")); p.add(contactF);
-        p.add(new JLabel("Email")); p.add(emailF);
-        p.add(new JLabel("Phone")); p.add(phoneF);
-        if (JOptionPane.showConfirmDialog(this, p, existing == null ? "Add customer" : "Edit customer",
-                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) != JOptionPane.OK_OPTION) return null;
+        p.add(new JLabel("Name"));
+        p.add(nameF);
+        p.add(new JLabel("Contact name"));
+        p.add(contactF);
+        p.add(new JLabel("Email"));
+        p.add(emailF);
+        p.add(new JLabel("Phone"));
+        p.add(phoneF);
+        if (JOptionPane.showConfirmDialog(this, p, existing == null ? "Add customer" : "Edit customer", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) != JOptionPane.OK_OPTION)
+            return null;
         String name = nameF.getText().trim();
-        if (name.isEmpty()) { JOptionPane.showMessageDialog(this, "Name is required."); return null; }
+        if (name.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Name is required.");
+            return null;
+        }
         Customer customer = existing != null ? existing : new Customer();
-        customer.setName(name); customer.setContactName(contactF.getText().trim());
-        customer.setEmail(emailF.getText().trim()); customer.setPhone(phoneF.getText().trim());
+        customer.setName(name);
+        customer.setContactName(contactF.getText().trim());
+        customer.setEmail(emailF.getText().trim());
+        customer.setPhone(phoneF.getText().trim());
         return customer;
+    }
+
+    public static void main(String[] args) {
+        ThemeConfig.install();
+        SwingUtilities.invokeLater(() -> new CustomerManagementFrame().setVisible(true));
     }
 }

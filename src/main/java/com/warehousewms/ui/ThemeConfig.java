@@ -10,6 +10,9 @@ import javax.swing.table.JTableHeader;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Centralised FlatLaf Dark theme configuration and reusable UI components.
@@ -36,6 +39,14 @@ public final class ThemeConfig {
     public static final Font FONT_BODY    = new Font("Segoe UI", Font.PLAIN, 14);
     public static final Font FONT_SMALL   = new Font("Segoe UI", Font.PLAIN, 12);
     public static final Font FONT_BUTTON  = new Font("Segoe UI", Font.BOLD, 13);
+
+    private static final String[] EMOJI_FONT_CANDIDATES = {
+            "Segoe UI Emoji",
+            "Segoe UI Symbol",
+            "Noto Color Emoji",
+            "Apple Color Emoji"
+    };
+    private static String cachedEmojiFontFamily;
 
     private ThemeConfig() {}
 
@@ -201,5 +212,45 @@ public final class ThemeConfig {
         field.putClientProperty("JTextField.placeholderText", placeholder);
         field.setPreferredSize(new Dimension(220, 36));
         return field;
+    }
+
+    /** Returns an emoji-capable font at the requested size. */
+    public static Font emojiFont(int size, int style) {
+        String family = resolveEmojiFontFamily();
+        if (family == null) {
+            family = FONT_BODY.getFamily();
+        }
+        return new Font(family, style, size);
+    }
+
+    /** Applies an emoji-capable font to the label if available. */
+    public static void applyEmojiFont(JLabel label) {
+        if (label == null) {
+            return;
+        }
+        String family = resolveEmojiFontFamily();
+        if (family == null) {
+            return;
+        }
+        Font base = label.getFont();
+        int style = base != null ? base.getStyle() : Font.PLAIN;
+        int size = base != null ? base.getSize() : FONT_BODY.getSize();
+        label.setFont(new Font(family, style, size));
+    }
+
+    private static String resolveEmojiFontFamily() {
+        if (cachedEmojiFontFamily != null) {
+            return cachedEmojiFontFamily.isEmpty() ? null : cachedEmojiFontFamily;
+        }
+        String[] available = GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames();
+        Set<String> availableSet = new HashSet<>(Arrays.asList(available));
+        for (String candidate : EMOJI_FONT_CANDIDATES) {
+            if (availableSet.contains(candidate)) {
+                cachedEmojiFontFamily = candidate;
+                return candidate;
+            }
+        }
+        cachedEmojiFontFamily = "";
+        return null;
     }
 }

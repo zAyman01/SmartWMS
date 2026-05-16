@@ -38,6 +38,7 @@ class BinRepositoryTest {
         zone.setParentBinId(null);
         zone.setSortOrder(1);
         repo.insert(zone);
+        assertTrue(zone.getBinId() > 0, "insert should set generated binId");
 
         List<Bin> roots = repo.findRootBins();
         assertFalse(roots.isEmpty());
@@ -46,28 +47,23 @@ class BinRepositoryTest {
 
     @Test
     void insertChildBinAndFindChildren() throws SQLException {
-        // Create parent
         Bin parent = new Bin();
         parent.setName("Zone B");
         parent.setBinType("Zone");
         parent.setParentBinId(null);
         parent.setSortOrder(1);
         repo.insert(parent);
+        assertTrue(parent.getBinId() > 0);
 
-        Bin inserted = repo.findRootBins().stream()
-                .filter(b -> "Zone B".equals(b.getName()))
-                .findFirst().orElse(null);
-        assertNotNull(inserted);
-
-        // Create child
         Bin child = new Bin();
         child.setName("Aisle 1");
         child.setBinType("Aisle");
-        child.setParentBinId(inserted.getBinId());
+        child.setParentBinId(parent.getBinId());
         child.setSortOrder(1);
         repo.insert(child);
+        assertTrue(child.getBinId() > 0);
 
-        List<Bin> children = repo.findChildren(inserted.getBinId());
+        List<Bin> children = repo.findChildren(parent.getBinId());
         assertEquals(1, children.size());
         assertEquals("Aisle 1", children.get(0).getName());
     }
@@ -79,13 +75,9 @@ class BinRepositoryTest {
         bin.setBinType("Location");
         bin.setSortOrder(0);
         repo.insert(bin);
+        assertTrue(bin.getBinId() > 0);
 
-        Bin found = repo.listAll().stream()
-                .filter(b -> "Test Bin".equals(b.getName()))
-                .findFirst().orElse(null);
-        assertNotNull(found);
-
-        Bin byId = repo.findById(found.getBinId());
+        Bin byId = repo.findById(bin.getBinId());
         assertNotNull(byId);
         assertEquals("Test Bin", byId.getName());
         assertEquals("Location", byId.getBinType());
@@ -99,17 +91,13 @@ class BinRepositoryTest {
         bin.setMaxWeightKg(100.0);
         bin.setSortOrder(0);
         repo.insert(bin);
+        assertTrue(bin.getBinId() > 0);
 
-        Bin found = repo.listAll().stream()
-                .filter(b -> "Old Bin".equals(b.getName()))
-                .findFirst().orElse(null);
-        assertNotNull(found);
+        bin.setName("New Bin");
+        bin.setMaxWeightKg(200.0);
+        repo.update(bin);
 
-        found.setName("New Bin");
-        found.setMaxWeightKg(200.0);
-        repo.update(found);
-
-        Bin updated = repo.findById(found.getBinId());
+        Bin updated = repo.findById(bin.getBinId());
         assertEquals("New Bin", updated.getName());
         assertEquals(200.0, updated.getMaxWeightKg(), 0.001);
     }
@@ -121,14 +109,10 @@ class BinRepositoryTest {
         bin.setBinType("Location");
         bin.setSortOrder(0);
         repo.insert(bin);
+        assertTrue(bin.getBinId() > 0);
 
-        Bin found = repo.listAll().stream()
-                .filter(b -> "Deletable".equals(b.getName()))
-                .findFirst().orElse(null);
-        assertNotNull(found);
-
-        assertTrue(repo.delete(found.getBinId()));
-        assertNull(repo.findById(found.getBinId()));
+        assertTrue(repo.delete(bin.getBinId()));
+        assertNull(repo.findById(bin.getBinId()));
     }
 
     @Test

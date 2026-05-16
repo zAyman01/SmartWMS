@@ -46,12 +46,16 @@ public class CustomerRepository {
     public void insert(Customer customer) throws SQLException {
         String sql = "INSERT INTO Customers (Name, ContactName, Email, Phone) VALUES (?, ?, ?, ?)";
         try (Connection conn = dataSource.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+             PreparedStatement ps = conn.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, customer.getName());
             ps.setString(2, customer.getContactName());
             ps.setString(3, customer.getEmail());
             ps.setString(4, customer.getPhone());
             ps.executeUpdate();
+            ResultSet rs = ps.getGeneratedKeys();
+            if (rs.next()) {
+                customer.setCustomerId(rs.getInt(1));
+            }
         }
     }
 

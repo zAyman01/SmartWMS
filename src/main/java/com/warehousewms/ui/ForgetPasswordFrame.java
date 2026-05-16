@@ -74,49 +74,83 @@ public class ForgetPasswordFrame extends JFrame {
 
         titleLabel.setForeground(ThemeConfig.ACCENT);
         backToLoginLabel.setForeground(ThemeConfig.ACCENT);
+
+        ThemeConfig.applyEmojiFont(appIconLabel);
     }
 
     private void handlePasswordReset() {
-        String usernameOrEmail = usernameOrEmailField.getText().trim();
+        String username = usernameOrEmailField.getText().trim();
 
-        if (usernameOrEmail.isEmpty()) {
+        if (username.isEmpty()) {
             statusLabel.setText("Please enter your username.");
-            return;
-        }
-
-        String newPassword = promptForNewPassword();
-        if (newPassword == null) {
             return;
         }
 
         resetButton.setEnabled(false);
         statusLabel.setForeground(ThemeConfig.TEXT_MUTED);
-        statusLabel.setText("Resetting password...");
+        statusLabel.setText("Verifying account...");
 
         new SwingWorker<Boolean, Void>() {
             @Override
             protected Boolean doInBackground() throws Exception {
                 try (AuthService authService = new AuthService(new DatabaseManager().getDataSourceWithFallback())) {
-                    return authService.resetPassword(usernameOrEmail, newPassword);
+                    return authService.usernameExists(username);
                 }
             }
 
             @Override
             protected void done() {
                 try {
-                    boolean updated = get();
-                    if (updated) {
-                        statusLabel.setForeground(ThemeConfig.SUCCESS);
-                        statusLabel.setText("Password updated. You can now sign in.");
-                        usernameOrEmailField.setText("");
-                    } else {
+                    boolean exists = get();
+                    if (!exists) {
                         statusLabel.setForeground(ThemeConfig.DANGER);
                         statusLabel.setText("Account not found.");
+                        resetButton.setEnabled(true);
+                        return;
                     }
+
+                    String newPassword = promptForNewPassword();
+                    if (newPassword == null) {
+                        statusLabel.setText(" ");
+                        resetButton.setEnabled(true);
+                        return;
+                    }
+
+                    statusLabel.setForeground(ThemeConfig.TEXT_MUTED);
+                    statusLabel.setText("Resetting password...");
+
+                    new SwingWorker<Boolean, Void>() {
+                        @Override
+                        protected Boolean doInBackground() throws Exception {
+                            try (AuthService authService = new AuthService(new DatabaseManager().getDataSourceWithFallback())) {
+                                return authService.resetPassword(username, newPassword);
+                            }
+                        }
+
+                        @Override
+                        protected void done() {
+                            try {
+                                boolean updated = get();
+                                if (updated) {
+                                    statusLabel.setForeground(ThemeConfig.SUCCESS);
+                                    statusLabel.setText("Password updated. You can now sign in.");
+                                    usernameOrEmailField.setText("");
+                                } else {
+                                    statusLabel.setForeground(ThemeConfig.DANGER);
+                                    statusLabel.setText("Account not found.");
+                                }
+                            } catch (Exception ex) {
+                                statusLabel.setForeground(ThemeConfig.DANGER);
+                                statusLabel.setText("Error: " + ex.getMessage());
+                            } finally {
+                                resetButton.setEnabled(true);
+                            }
+                        }
+                    }.execute();
+
                 } catch (Exception ex) {
                     statusLabel.setForeground(ThemeConfig.DANGER);
                     statusLabel.setText("Error: " + ex.getMessage());
-                } finally {
                     resetButton.setEnabled(true);
                 }
             }
@@ -157,5 +191,10 @@ public class ForgetPasswordFrame extends JFrame {
             return null;
         }
         return password;
+    }
+
+    public static void main(String[] args) {
+        ThemeConfig.install();
+        SwingUtilities.invokeLater(() -> new ForgetPasswordFrame().setVisible(true));
     }
 }

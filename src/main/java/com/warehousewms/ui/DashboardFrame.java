@@ -52,8 +52,8 @@ public class DashboardFrame extends JFrame {
         JPanel brand = new JPanel(new FlowLayout(FlowLayout.LEFT, 14, 14));
         brand.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
         brand.setOpaque(false);
-        JLabel icon = new JLabel("\uD83D\uDCE6"); // 📦
-        icon.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 26));
+        JLabel icon = new JLabel("\uD83D\uDCE6"); // \uD83D\uDCE6
+        icon.setFont(ThemeConfig.emojiFont(26, Font.PLAIN));
         JLabel brandLabel = new JLabel("Smart WMS");
         brandLabel.setFont(ThemeConfig.FONT_TITLE);
         brandLabel.setForeground(ThemeConfig.ACCENT);
@@ -64,11 +64,11 @@ public class DashboardFrame extends JFrame {
         sidebar.add(Box.createVerticalStrut(10));
 
         // Navigation items
-        sidebar.add(navItem("\uD83C\uDFE0  Home", this::showHomePage));
-        sidebar.add(navItem("\uD83D\uDCE6  Products", () -> openFrame(new ProductManagementFrame())));
-        sidebar.add(navItem("\uD83D\uDE9A  Suppliers", () -> openFrame(new SupplierManagementFrame())));
-        sidebar.add(navItem("\uD83D\uDC65  Customers", () -> openFrame(new CustomerManagementFrame())));
-        sidebar.add(navItem("\uD83D\uDCCD  Bins / Locations", () -> openFrame(new BinManagementFrame())));
+        sidebar.add(navItem("\uD83C\uDFE0", "Home", this::showHomePage));
+        sidebar.add(navItem("\uD83D\uDCE6", "Products", () -> openFrame(new ProductManagementFrame())));
+        sidebar.add(navItem("\uD83D\uDE9A", "Suppliers", () -> openFrame(new SupplierManagementFrame())));
+        sidebar.add(navItem("\uD83D\uDC65", "Customers", () -> openFrame(new CustomerManagementFrame())));
+        sidebar.add(navItem("\uD83D\uDCCD", "Bins / Locations", () -> openFrame(new BinManagementFrame())));
 
         sidebar.add(Box.createVerticalStrut(8));
         JLabel inventorySection = new JLabel("  INVENTORY OPS");
@@ -78,11 +78,11 @@ public class DashboardFrame extends JFrame {
         inventorySection.setBorder(new EmptyBorder(4, 16, 4, 0));
         sidebar.add(inventorySection);
 
-        sidebar.add(navItem("\uD83D\uDCDC  Purchase Orders", () -> openFrame(new PurchaseOrderManagementFrame())));
-        sidebar.add(navItem("\uD83D\uDCE6  Receiving", () -> openFrame(new ReceivingFrame())));
-        sidebar.add(navItem("\uD83D\uDCDD  Customer Orders", () -> openFrame(new OrderManagementFrame())));
-        sidebar.add(navItem("\u23F1  Fulfillment", () -> openFrame(new FulfillmentFrame())));
-        sidebar.add(navItem("\uD83D\uDCCA  Inventory Mgmt", () -> openFrame(new InventoryManagementFrame())));
+        sidebar.add(navItem("\uD83D\uDCDC", "Purchase Orders", () -> openFrame(new PurchaseOrderManagementFrame())));
+        sidebar.add(navItem("\uD83D\uDCE6", "Receiving", () -> openFrame(new ReceivingFrame())));
+        sidebar.add(navItem("\uD83D\uDCDD", "Customer Orders", () -> openFrame(new OrderManagementFrame())));
+        sidebar.add(navItem("\u23F1", "Fulfillment", () -> openFrame(new FulfillmentFrame())));
+        sidebar.add(navItem("\uD83D\uDCCA", "Inventory Mgmt", () -> openFrame(new InventoryManagementFrame())));
 
         sidebar.add(Box.createVerticalStrut(8));
         JLabel analyticsSection = new JLabel("  REPORTS & KPI");
@@ -91,7 +91,7 @@ public class DashboardFrame extends JFrame {
         analyticsSection.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
         analyticsSection.setBorder(new EmptyBorder(4, 16, 4, 0));
         sidebar.add(analyticsSection);
-        sidebar.add(navItem("\uD83D\uDCC8  Analytics Dashboard", () -> openFrame(new AnalyticsFrame())));
+        sidebar.add(navItem("\uD83D\uDCC8", "Analytics Dashboard", () -> openFrame(new AnalyticsFrame())));
 
         if (SessionContext.isAdmin()) {
             sidebar.add(Box.createVerticalStrut(8));
@@ -101,8 +101,8 @@ public class DashboardFrame extends JFrame {
             adminSection.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
             adminSection.setBorder(new EmptyBorder(4, 16, 4, 0));
             sidebar.add(adminSection);
-            sidebar.add(navItem("\uD83D\uDD12  User Management", () -> openFrame(new UserManagementFrame())));
-            sidebar.add(navItem("\uD83D\uDCBE  Database Backup", () -> openFrame(new BackupFrame())));
+            sidebar.add(navItem("\uD83D\uDD12", "User Management", () -> openFrame(new UserManagementFrame())));
+            sidebar.add(navItem("\uD83D\uDCBE", "Database Backup", () -> openFrame(new BackupFrame())));
         }
 
         sidebar.add(Box.createVerticalGlue());
@@ -113,17 +113,28 @@ public class DashboardFrame extends JFrame {
         return sidebar;
     }
 
-    private JPanel navItem(String label, Runnable action) {
+    private JPanel navItem(String iconText, String label, Runnable action) {
         JPanel item = new JPanel(new BorderLayout());
         item.setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
         item.setBackground(ThemeConfig.BG_SECONDARY);
         item.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         item.setBorder(new EmptyBorder(0, 16, 0, 16));
 
+        JPanel labelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        labelPanel.setOpaque(false);
+
+        JLabel iconLabel = new JLabel(iconText);
+        iconLabel.setFont(ThemeConfig.emojiFont(16, Font.PLAIN));
+        iconLabel.setForeground(ThemeConfig.TEXT_PRIMARY);
+
         JLabel textLabel = new JLabel(label);
         textLabel.setFont(ThemeConfig.FONT_BODY);
         textLabel.setForeground(ThemeConfig.TEXT_PRIMARY);
-        item.add(textLabel, BorderLayout.CENTER);
+
+        labelPanel.add(iconLabel);
+        labelPanel.add(textLabel);
+
+        item.add(labelPanel, BorderLayout.CENTER);
 
         item.addMouseListener(new MouseAdapter() {
             @Override public void mouseEntered(MouseEvent e) {
@@ -294,7 +305,7 @@ public class DashboardFrame extends JFrame {
 
         // icon circle
         JLabel iconLabel = new JLabel(emoji);
-        iconLabel.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 28));
+        iconLabel.setFont(ThemeConfig.emojiFont(28, Font.PLAIN));
         card.add(iconLabel, BorderLayout.WEST);
 
         JPanel textPanel = new JPanel();
@@ -333,5 +344,9 @@ public class DashboardFrame extends JFrame {
         if (hour < 12) return "Good morning";
         if (hour < 17) return "Good afternoon";
         return "Good evening";
+    }
+    public static void main(String[] args) {
+        ThemeConfig.install();
+        SwingUtilities.invokeLater(() -> new DashboardFrame().setVisible(true));
     }
 }

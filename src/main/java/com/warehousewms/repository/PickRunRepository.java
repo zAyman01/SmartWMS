@@ -42,9 +42,14 @@ public class PickRunRepository {
     }
 
     public void insert(PickRun pr) throws SQLException {
+        try (Connection conn = dataSource.getConnection()) {
+            insert(pr, conn);
+        }
+    }
+
+    public void insert(PickRun pr, Connection conn) throws SQLException {
         String sql = "INSERT INTO PickRuns (AssignedToUserId, StartedAt, CompletedAt, Status) VALUES (?, ?, ?, ?)";
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             if (pr.getAssignedToUserId() != null) ps.setInt(1, pr.getAssignedToUserId());
             else ps.setNull(1, Types.INTEGER);
             if (pr.getStartedAt() != null) ps.setTimestamp(2, new Timestamp(pr.getStartedAt().getTime()));
@@ -59,9 +64,14 @@ public class PickRunRepository {
     }
 
     public void update(PickRun pr) throws SQLException {
+        try (Connection conn = dataSource.getConnection()) {
+            update(pr, conn);
+        }
+    }
+
+    public void update(PickRun pr, Connection conn) throws SQLException {
         String sql = "UPDATE PickRuns SET AssignedToUserId=?, StartedAt=?, CompletedAt=?, Status=? WHERE PickRunId=?";
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             if (pr.getAssignedToUserId() != null) ps.setInt(1, pr.getAssignedToUserId());
             else ps.setNull(1, Types.INTEGER);
             if (pr.getStartedAt() != null) ps.setTimestamp(2, new Timestamp(pr.getStartedAt().getTime()));
@@ -89,9 +99,14 @@ public class PickRunRepository {
     }
 
     public void insertItem(PickRunItem item) throws SQLException {
+        try (Connection conn = dataSource.getConnection()) {
+            insertItem(item, conn);
+        }
+    }
+
+    public void insertItem(PickRunItem item, Connection conn) throws SQLException {
         String sql = "INSERT INTO PickRunItems (PickRunId, OrderLineId, BinId, QuantityToPick, QuantityPicked, Status) VALUES (?, ?, ?, ?, ?, ?)";
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setInt(1, item.getPickRunId());
             ps.setInt(2, item.getOrderLineId());
             ps.setInt(3, item.getBinId());
@@ -105,9 +120,14 @@ public class PickRunRepository {
     }
 
     public void updateItem(PickRunItem item) throws SQLException {
+        try (Connection conn = dataSource.getConnection()) {
+            updateItem(item, conn);
+        }
+    }
+
+    public void updateItem(PickRunItem item, Connection conn) throws SQLException {
         String sql = "UPDATE PickRunItems SET PickRunId=?, OrderLineId=?, BinId=?, QuantityToPick=?, QuantityPicked=?, Status=? WHERE PickRunItemId=?";
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, item.getPickRunId());
             ps.setInt(2, item.getOrderLineId());
             ps.setInt(3, item.getBinId());

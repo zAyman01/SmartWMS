@@ -28,9 +28,11 @@ public class PurchaseOrderManagementFrame extends JFrame {
     private JTable poTable;
     private JLabel statusLabel;
 
-    private final DefaultTableModel tableModel = new DefaultTableModel(
-            new Object[]{"PO Id", "Supplier Id", "Date", "Status", "Notes"}, 0) {
-        @Override public boolean isCellEditable(int row, int column) { return false; }
+    private final DefaultTableModel tableModel = new DefaultTableModel(new Object[]{"PO Id", "Supplier Id", "Date", "Status", "Notes"}, 0) {
+        @Override
+        public boolean isCellEditable(int row, int column) {
+            return false;
+        }
     };
     private final TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(tableModel);
 
@@ -62,9 +64,21 @@ public class PurchaseOrderManagementFrame extends JFrame {
                 String t = searchField.getText().trim();
                 sorter.setRowFilter(t.isEmpty() ? null : RowFilter.regexFilter("(?i)" + t));
             }
-            @Override public void insertUpdate(DocumentEvent e) { filter(); }
-            @Override public void removeUpdate(DocumentEvent e) { filter(); }
-            @Override public void changedUpdate(DocumentEvent e) { filter(); }
+
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                filter();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                filter();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                filter();
+            }
         });
 
         addButton.addActionListener(e -> addPO());
@@ -81,25 +95,34 @@ public class PurchaseOrderManagementFrame extends JFrame {
         btn.setFocusPainted(false);
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btn.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override public void mouseEntered(java.awt.event.MouseEvent e) { btn.setBackground(hover); }
-            @Override public void mouseExited(java.awt.event.MouseEvent e) { btn.setBackground(bg); }
+            @Override
+            public void mouseEntered(java.awt.event.MouseEvent e) {
+                btn.setBackground(hover);
+            }
+
+            @Override
+            public void mouseExited(java.awt.event.MouseEvent e) {
+                btn.setBackground(bg);
+            }
         });
     }
 
     private void loadPOs() {
         statusLabel.setText("Loading POs...");
         new SwingWorker<List<PurchaseOrder>, Void>() {
-            @Override protected List<PurchaseOrder> doInBackground() throws Exception {
+            @Override
+            protected List<PurchaseOrder> doInBackground() throws Exception {
                 PurchaseOrderService svc = new PurchaseOrderService(new DatabaseManager().getDataSourceWithFallback());
                 return svc.getAllPOs();
             }
-            @Override protected void done() {
+
+            @Override
+            protected void done() {
                 try {
                     List<PurchaseOrder> list = get();
                     tableModel.setRowCount(0);
                     for (PurchaseOrder po : list) {
-                        tableModel.addRow(new Object[]{po.getPoId(), po.getSupplierId(),
-                                po.getOrderDate(), po.getStatus(), po.getNotes()});
+                        tableModel.addRow(new Object[]{po.getPoId(), po.getSupplierId(), po.getOrderDate(), po.getStatus(), po.getNotes()});
                     }
                     statusLabel.setText("Loaded " + list.size() + " POs.");
                 } catch (Exception ex) {
@@ -113,32 +136,51 @@ public class PurchaseOrderManagementFrame extends JFrame {
         PurchaseOrder result = showPODialog(null);
         if (result == null) return;
         new SwingWorker<Void, Void>() {
-            @Override protected Void doInBackground() throws Exception {
+            @Override
+            protected Void doInBackground() throws Exception {
                 PurchaseOrderService svc = new PurchaseOrderService(new DatabaseManager().getDataSourceWithFallback());
                 svc.createPO(result, new ArrayList<>()); // Simplify: no lines created in this dialog
                 return null;
             }
-            @Override protected void done() {
-                try { get(); statusLabel.setText("PO created."); loadPOs(); }
-                catch (Exception ex) { statusLabel.setText("Failed: " + ex.getMessage()); }
+
+            @Override
+            protected void done() {
+                try {
+                    get();
+                    statusLabel.setText("PO created.");
+                    loadPOs();
+                } catch (Exception ex) {
+                    statusLabel.setText("Failed: " + ex.getMessage());
+                }
             }
         }.execute();
     }
 
     private void editPO() {
         PurchaseOrder selected = getSelectedPO();
-        if (selected == null) { statusLabel.setText("Select a PO."); return; }
+        if (selected == null) {
+            statusLabel.setText("Select a PO.");
+            return;
+        }
         PurchaseOrder result = showPODialog(selected);
         if (result == null) return;
         new SwingWorker<Void, Void>() {
-            @Override protected Void doInBackground() throws Exception {
+            @Override
+            protected Void doInBackground() throws Exception {
                 PurchaseOrderService svc = new PurchaseOrderService(new DatabaseManager().getDataSourceWithFallback());
                 svc.updatePO(result, new ArrayList<>());
                 return null;
             }
-            @Override protected void done() {
-                try { get(); statusLabel.setText("PO updated."); loadPOs(); }
-                catch (Exception ex) { statusLabel.setText("Failed: " + ex.getMessage()); }
+
+            @Override
+            protected void done() {
+                try {
+                    get();
+                    statusLabel.setText("PO updated.");
+                    loadPOs();
+                } catch (Exception ex) {
+                    statusLabel.setText("Failed: " + ex.getMessage());
+                }
             }
         }.execute();
     }
@@ -166,12 +208,15 @@ public class PurchaseOrderManagementFrame extends JFrame {
             statusF.setText("Open");
         }
         JPanel p = new JPanel(new GridLayout(0, 1, 0, 4));
-        p.add(new JLabel("Supplier Id")); p.add(supplierF);
-        p.add(new JLabel("Status")); p.add(statusF);
-        p.add(new JLabel("Notes")); p.add(notesF);
-        if (JOptionPane.showConfirmDialog(this, p, existing == null ? "Create PO" : "Edit PO",
-                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) != JOptionPane.OK_OPTION) return null;
-        
+        p.add(new JLabel("Supplier Id"));
+        p.add(supplierF);
+        p.add(new JLabel("Status"));
+        p.add(statusF);
+        p.add(new JLabel("Notes"));
+        p.add(notesF);
+        if (JOptionPane.showConfirmDialog(this, p, existing == null ? "Create PO" : "Edit PO", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) != JOptionPane.OK_OPTION)
+            return null;
+
         try {
             PurchaseOrder po = existing != null ? existing : new PurchaseOrder();
             po.setSupplierId(Integer.parseInt(supplierF.getText().trim()));
@@ -183,5 +228,10 @@ public class PurchaseOrderManagementFrame extends JFrame {
             JOptionPane.showMessageDialog(this, "Invalid input.");
             return null;
         }
+    }
+
+    public static void main(String[] args) {
+        ThemeConfig.install();
+        SwingUtilities.invokeLater(() -> new PurchaseOrderManagementFrame().setVisible(true));
     }
 }

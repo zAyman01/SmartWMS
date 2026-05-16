@@ -18,14 +18,24 @@ public class ProductRepository {
     }
 
     public Product findById(int productId) throws SQLException {
-        String sql = "SELECT ProductId, SKU, Name, ImagePath, UnitWeightKg, UnitVolumeM3, IsActive FROM Products WHERE ProductId = ?";
+        String sql = "SELECT ProductId, SKU, Name, ImagePath, UnitWeightKg, UnitVolumeM3, IsActive, Barcode FROM Products WHERE ProductId = ?";
         try (Connection conn = dataSource.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, productId);
             ResultSet rs = ps.executeQuery();
-            if (rs.next()) {
-                return mapProduct(rs);
-            }
+            if (rs.next()) return mapProduct(rs);
+        }
+        return null;
+    }
+
+    public Product findByBarcode(String barcode) throws SQLException {
+        String sql = "SELECT ProductId, SKU, Name, ImagePath, UnitWeightKg, UnitVolumeM3, IsActive, Barcode FROM Products WHERE Barcode = ? OR SKU = ?";
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, barcode);
+            ps.setString(2, barcode);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) return mapProduct(rs);
         }
         return null;
     }
@@ -42,47 +52,48 @@ public class ProductRepository {
     }
 
     public List<Product> listAll() throws SQLException {
-        String sql = "SELECT ProductId, SKU, Name, ImagePath, UnitWeightKg, UnitVolumeM3, IsActive FROM Products ORDER BY Name";
+        String sql = "SELECT ProductId, SKU, Name, ImagePath, UnitWeightKg, UnitVolumeM3, IsActive, Barcode FROM Products ORDER BY Name";
         List<Product> products = new ArrayList<>();
         try (Connection conn = dataSource.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                products.add(mapProduct(rs));
-            }
+            while (rs.next()) products.add(mapProduct(rs));
         }
         return products;
     }
 
     public List<Product> listActive() throws SQLException {
-        String sql = "SELECT ProductId, SKU, Name, ImagePath, UnitWeightKg, UnitVolumeM3, IsActive FROM Products WHERE IsActive = TRUE ORDER BY Name";
+        String sql = "SELECT ProductId, SKU, Name, ImagePath, UnitWeightKg, UnitVolumeM3, IsActive, Barcode FROM Products WHERE IsActive = TRUE ORDER BY Name";
         List<Product> products = new ArrayList<>();
         try (Connection conn = dataSource.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                products.add(mapProduct(rs));
-            }
+            while (rs.next()) products.add(mapProduct(rs));
         }
         return products;
     }
 
     public void insert(Product product) throws SQLException {
-        String sql = "INSERT INTO Products (SKU, Name, ImagePath, UnitWeightKg, UnitVolumeM3, IsActive) VALUES (?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO Products (SKU, Name, ImagePath, UnitWeightKg, UnitVolumeM3, IsActive, Barcode) VALUES (?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = dataSource.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+             PreparedStatement ps = conn.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, product.getSku());
             ps.setString(2, product.getName());
             ps.setString(3, product.getImagePath());
             ps.setDouble(4, product.getUnitWeightKg());
             ps.setDouble(5, product.getUnitVolumeM3());
             ps.setBoolean(6, product.isActive());
+            ps.setString(7, product.getBarcode());
             ps.executeUpdate();
+            ResultSet rs = ps.getGeneratedKeys();
+            if (rs.next()) {
+                product.setProductId(rs.getInt(1));
+            }
         }
     }
 
     public void update(Product product) throws SQLException {
-        String sql = "UPDATE Products SET SKU = ?, Name = ?, ImagePath = ?, UnitWeightKg = ?, UnitVolumeM3 = ?, IsActive = ? WHERE ProductId = ?";
+        String sql = "UPDATE Products SET SKU = ?, Name = ?, ImagePath = ?, UnitWeightKg = ?, UnitVolumeM3 = ?, IsActive = ?, Barcode = ? WHERE ProductId = ?";
         try (Connection conn = dataSource.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, product.getSku());
@@ -91,7 +102,8 @@ public class ProductRepository {
             ps.setDouble(4, product.getUnitWeightKg());
             ps.setDouble(5, product.getUnitVolumeM3());
             ps.setBoolean(6, product.isActive());
-            ps.setInt(7, product.getProductId());
+            ps.setString(7, product.getBarcode());
+            ps.setInt(8, product.getProductId());
             ps.executeUpdate();
         }
     }
@@ -114,6 +126,7 @@ public class ProductRepository {
         p.setUnitWeightKg(rs.getDouble("UnitWeightKg"));
         p.setUnitVolumeM3(rs.getDouble("UnitVolumeM3"));
         p.setActive(rs.getBoolean("IsActive"));
+        p.setBarcode(rs.getString("Barcode"));
         return p;
     }
 }

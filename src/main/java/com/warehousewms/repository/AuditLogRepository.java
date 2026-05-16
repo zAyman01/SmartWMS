@@ -15,9 +15,14 @@ public class AuditLogRepository {
     }
 
     public void insert(AuditLog log) throws SQLException {
+        try (Connection conn = dataSource.getConnection()) {
+            insert(log, conn);
+        }
+    }
+
+    public void insert(AuditLog log, Connection conn) throws SQLException {
         String sql = "INSERT INTO AuditLog (TableName, RecordId, ActionType, ColumnName, OldValue, NewValue, ChangedByUserId, ChangedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, log.getTableName());
             ps.setInt(2, log.getRecordId());
             ps.setString(3, log.getActionType());

@@ -107,6 +107,9 @@ public class LoginFrame extends JFrame {
         // Title styling
         titleLabel.setForeground(ThemeConfig.ACCENT);
 
+        // App icon emoji font
+        ThemeConfig.applyEmojiFont(appIconLabel);
+
         // Forgot password link
         forgotPasswordLabel.setForeground(ThemeConfig.ACCENT);
     }
@@ -165,5 +168,10 @@ public class LoginFrame extends JFrame {
             passwordField.setText(saved[1]);
             rememberMeCheckBox.setSelected(true);
         }
+    }
+
+    public static void main(String[] args) {
+        ThemeConfig.install();
+        SwingUtilities.invokeLater(() -> new LoginFrame().setVisible(true));
     }
 }

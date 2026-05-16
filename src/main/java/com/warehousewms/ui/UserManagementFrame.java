@@ -31,7 +31,10 @@ public class UserManagementFrame extends JFrame {
     private static final String[] ROLES = {"Admin", "Supervisor", "Picker", "Operator"};
     private final DefaultTableModel tableModel = new DefaultTableModel(
             new Object[]{"Id", "Username", "Full Name", "Role"}, 0) {
-        @Override public boolean isCellEditable(int row, int column) { return false; }
+        @Override
+        public boolean isCellEditable(int row, int column) {
+            return false;
+        }
     };
     private final TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(tableModel);
 
@@ -39,7 +42,8 @@ public class UserManagementFrame extends JFrame {
         if (!SessionContext.isAdmin()) {
             JOptionPane.showMessageDialog(null, "Access denied. Admin role required.",
                     "Access denied", JOptionPane.WARNING_MESSAGE);
-            dispose(); return;
+            dispose();
+            return;
         }
 
         setContentPane(rootPanel);
@@ -73,9 +77,21 @@ public class UserManagementFrame extends JFrame {
                 String t = searchField.getText().trim();
                 sorter.setRowFilter(t.isEmpty() ? null : RowFilter.regexFilter("(?i)" + t));
             }
-            @Override public void insertUpdate(DocumentEvent e) { filter(); }
-            @Override public void removeUpdate(DocumentEvent e) { filter(); }
-            @Override public void changedUpdate(DocumentEvent e) { filter(); }
+
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                filter();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                filter();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                filter();
+            }
         });
 
         // Listeners
@@ -94,20 +110,30 @@ public class UserManagementFrame extends JFrame {
         btn.setFocusPainted(false);
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btn.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override public void mouseEntered(java.awt.event.MouseEvent e) { btn.setBackground(hover); }
-            @Override public void mouseExited(java.awt.event.MouseEvent e) { btn.setBackground(bg); }
+            @Override
+            public void mouseEntered(java.awt.event.MouseEvent e) {
+                btn.setBackground(hover);
+            }
+
+            @Override
+            public void mouseExited(java.awt.event.MouseEvent e) {
+                btn.setBackground(bg);
+            }
         });
     }
 
     private void loadUsers() {
         statusLabel.setText("Loading users...");
         new SwingWorker<List<User>, Void>() {
-            @Override protected List<User> doInBackground() throws Exception {
+            @Override
+            protected List<User> doInBackground() throws Exception {
                 try (AuthService svc = new AuthService(new DatabaseManager().getDataSourceWithFallback())) {
                     return svc.listUsers();
                 }
             }
-            @Override protected void done() {
+
+            @Override
+            protected void done() {
                 try {
                     List<User> list = get();
                     tableModel.setRowCount(0);
@@ -126,7 +152,8 @@ public class UserManagementFrame extends JFrame {
         UserFormResult result = showUserDialog(null);
         if (result == null) return;
         new SwingWorker<Boolean, Void>() {
-            @Override protected Boolean doInBackground() throws Exception {
+            @Override
+            protected Boolean doInBackground() throws Exception {
                 try (AuthService svc = new AuthService(new DatabaseManager().getDataSourceWithFallback())) {
                     if (svc.usernameExists(result.user.getUsername())) return false;
                     result.user.setPasswordHash(result.newPassword);
@@ -134,23 +161,34 @@ public class UserManagementFrame extends JFrame {
                     return true;
                 }
             }
-            @Override protected void done() {
+
+            @Override
+            protected void done() {
                 try {
-                    if (!get()) { statusLabel.setText("Username exists."); return; }
+                    if (!get()) {
+                        statusLabel.setText("Username exists.");
+                        return;
+                    }
                     statusLabel.setText("User created.");
                     loadUsers();
-                } catch (Exception ex) { statusLabel.setText("Failed: " + ex.getMessage()); }
+                } catch (Exception ex) {
+                    statusLabel.setText("Failed: " + ex.getMessage());
+                }
             }
         }.execute();
     }
 
     private void editUser() {
         User selected = getSelectedUser();
-        if (selected == null) { statusLabel.setText("Select a user to edit."); return; }
+        if (selected == null) {
+            statusLabel.setText("Select a user to edit.");
+            return;
+        }
         UserFormResult result = showUserDialog(selected);
         if (result == null) return;
         new SwingWorker<Void, Void>() {
-            @Override protected Void doInBackground() throws Exception {
+            @Override
+            protected Void doInBackground() throws Exception {
                 try (AuthService svc = new AuthService(new DatabaseManager().getDataSourceWithFallback())) {
                     svc.updateUser(result.user);
                     if (result.newPassword != null && !result.newPassword.isEmpty()) {
@@ -159,30 +197,49 @@ public class UserManagementFrame extends JFrame {
                 }
                 return null;
             }
-            @Override protected void done() {
-                try { get(); statusLabel.setText("User updated."); loadUsers(); }
-                catch (Exception ex) { statusLabel.setText("Failed: " + ex.getMessage()); }
+
+            @Override
+            protected void done() {
+                try {
+                    get();
+                    statusLabel.setText("User updated.");
+                    loadUsers();
+                } catch (Exception ex) {
+                    statusLabel.setText("Failed: " + ex.getMessage());
+                }
             }
         }.execute();
     }
 
     private void deleteUser() {
         User selected = getSelectedUser();
-        if (selected == null) { statusLabel.setText("Select a user to delete."); return; }
+        if (selected == null) {
+            statusLabel.setText("Select a user to delete.");
+            return;
+        }
         if (selected.getUserId() == SessionContext.getCurrentUser().getUserId()) {
-            statusLabel.setText("Cannot delete yourself."); return;
+            statusLabel.setText("Cannot delete yourself.");
+            return;
         }
         if (JOptionPane.showConfirmDialog(this, "Delete '" + selected.getUsername() + "'?",
                 "Confirm delete", JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION) return;
         new SwingWorker<Boolean, Void>() {
-            @Override protected Boolean doInBackground() throws Exception {
+            @Override
+            protected Boolean doInBackground() throws Exception {
                 try (AuthService svc = new AuthService(new DatabaseManager().getDataSourceWithFallback())) {
                     return svc.deleteUser(selected.getUserId());
                 }
             }
-            @Override protected void done() {
-                try { boolean d = get(); statusLabel.setText(d ? "Deleted." : "Not found."); if (d) loadUsers(); }
-                catch (Exception ex) { statusLabel.setText("Failed: " + ex.getMessage()); }
+
+            @Override
+            protected void done() {
+                try {
+                    boolean d = get();
+                    statusLabel.setText(d ? "Deleted." : "Not found.");
+                    if (d) loadUsers();
+                } catch (Exception ex) {
+                    statusLabel.setText("Failed: " + ex.getMessage());
+                }
             }
         }.execute();
     }
@@ -204,15 +261,22 @@ public class UserManagementFrame extends JFrame {
         JComboBox<String> roleBox = new JComboBox<>(ROLES);
         JPasswordField passF = new JPasswordField(), confirmF = new JPasswordField();
         if (existing != null) {
-            usernameF.setText(existing.getUsername()); usernameF.setEnabled(false);
-            fullNameF.setText(existing.getFullName()); roleBox.setSelectedItem(existing.getRole());
+            usernameF.setText(existing.getUsername());
+            usernameF.setEnabled(false);
+            fullNameF.setText(existing.getFullName());
+            roleBox.setSelectedItem(existing.getRole());
         }
         JPanel p = new JPanel(new GridLayout(0, 1, 0, 4));
-        p.add(new JLabel("Username")); p.add(usernameF);
-        p.add(new JLabel("Full name")); p.add(fullNameF);
-        p.add(new JLabel("Role")); p.add(roleBox);
-        p.add(new JLabel(existing == null ? "Password" : "New password (blank to keep)")); p.add(passF);
-        p.add(new JLabel("Confirm password")); p.add(confirmF);
+        p.add(new JLabel("Username"));
+        p.add(usernameF);
+        p.add(new JLabel("Full name"));
+        p.add(fullNameF);
+        p.add(new JLabel("Role"));
+        p.add(roleBox);
+        p.add(new JLabel(existing == null ? "Password" : "New password (blank to keep)"));
+        p.add(passF);
+        p.add(new JLabel("Confirm password"));
+        p.add(confirmF);
 
         if (JOptionPane.showConfirmDialog(this, p, existing == null ? "Add user" : "Edit user",
                 JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) != JOptionPane.OK_OPTION) return null;
@@ -221,19 +285,46 @@ public class UserManagementFrame extends JFrame {
         String role = (String) roleBox.getSelectedItem();
         String pass = new String(passF.getPassword()), confirm = new String(confirmF.getPassword());
 
-        if (username.isEmpty() || fullName.isEmpty()) { JOptionPane.showMessageDialog(this, "Username and name required."); return null; }
-        if (existing == null && username.length() < 3) { JOptionPane.showMessageDialog(this, "Username min 3 chars."); return null; }
-        if (!pass.equals(confirm)) { JOptionPane.showMessageDialog(this, "Passwords don't match."); return null; }
-        if (existing == null && pass.length() < 6) { JOptionPane.showMessageDialog(this, "Password min 6 chars."); return null; }
-        if (existing != null && !pass.isEmpty() && pass.length() < 6) { JOptionPane.showMessageDialog(this, "Password min 6 chars."); return null; }
+        if (username.isEmpty() || fullName.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Username and name required.");
+            return null;
+        }
+        if (existing == null && username.length() < 3) {
+            JOptionPane.showMessageDialog(this, "Username min 3 chars.");
+            return null;
+        }
+        if (!pass.equals(confirm)) {
+            JOptionPane.showMessageDialog(this, "Passwords don't match.");
+            return null;
+        }
+        if (existing == null && pass.length() < 6) {
+            JOptionPane.showMessageDialog(this, "Password min 6 chars.");
+            return null;
+        }
+        if (existing != null && !pass.isEmpty() && pass.length() < 6) {
+            JOptionPane.showMessageDialog(this, "Password min 6 chars.");
+            return null;
+        }
 
         User u = existing != null ? existing : new User();
-        u.setUsername(username); u.setFullName(fullName); u.setRole(role);
+        u.setUsername(username);
+        u.setFullName(fullName);
+        u.setRole(role);
         return new UserFormResult(u, pass.isEmpty() ? null : pass);
     }
 
     private static class UserFormResult {
-        final User user; final String newPassword;
-        UserFormResult(User u, String p) { user = u; newPassword = p; }
+        final User user;
+        final String newPassword;
+
+        UserFormResult(User u, String p) {
+            user = u;
+            newPassword = p;
+        }
+    }
+
+    public static void main(String[] args) {
+        ThemeConfig.install();
+        SwingUtilities.invokeLater(() -> new UserManagementFrame().setVisible(true));
     }
 }
