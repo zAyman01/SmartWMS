@@ -55,9 +55,9 @@ public class OrderManagementFrame extends JFrame {
         statusLabel.setForeground(ThemeConfig.TEXT_MUTED);
         searchField.putClientProperty("JTextField.placeholderText", "Search Orders...");
 
-        applyButtonTheme(addButton, ThemeConfig.ACCENT, ThemeConfig.ACCENT_HOVER);
-        applyButtonTheme(editButton, ThemeConfig.BG_CARD, ThemeConfig.BG_HOVER);
-        applyButtonTheme(refreshButton, ThemeConfig.BG_CARD, ThemeConfig.BG_HOVER);
+        ThemeConfig.styleButton(addButton, ThemeConfig.ACCENT, ThemeConfig.ACCENT_HOVER, "add");
+        ThemeConfig.styleButton(editButton, ThemeConfig.BG_CARD, ThemeConfig.BG_HOVER, "edit");
+        ThemeConfig.styleButton(refreshButton, ThemeConfig.BG_CARD, ThemeConfig.BG_HOVER, "refresh");
 
         searchField.getDocument().addDocumentListener(new DocumentListener() {
             private void filter() {
@@ -86,26 +86,20 @@ public class OrderManagementFrame extends JFrame {
         refreshButton.addActionListener(e -> loadOrders());
 
         loadOrders();
+
+        ThemeConfig.addHelpMenu(this, "Sales Orders (Outbound)\n\n" +
+            "BUSINESS OVERVIEW:\n" +
+            "Customer Orders represent the demand side of your warehouse. When a customer makes a purchase, a Sales Order " +
+            "is generated. This document dictates what needs to be picked, packed, and shipped out of the facility. " +
+            "It drives the entire outbound logistics workflow.\n\n" +
+            "HOW TO USE THIS PAGE:\n" +
+            "• Create Order: Start a new order by selecting the destination Customer and setting shipping priorities.\n" +
+            "• Manage Lines: Specify the products and exact quantities the customer has requested.\n" +
+            "• Next Steps: Once the order is complete, it is handed over to the 'Fulfillment & Picking' module, " +
+            "where warehouse staff will physically locate and pack the requested stock.");
     }
 
-    private void applyButtonTheme(JButton btn, Color bg, Color hover) {
-        btn.setFont(ThemeConfig.FONT_BUTTON);
-        btn.setBackground(bg);
-        btn.setForeground(bg.equals(ThemeConfig.BG_CARD) ? ThemeConfig.TEXT_PRIMARY : Color.WHITE);
-        btn.setFocusPainted(false);
-        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btn.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseEntered(java.awt.event.MouseEvent e) {
-                btn.setBackground(hover);
-            }
-
-            @Override
-            public void mouseExited(java.awt.event.MouseEvent e) {
-                btn.setBackground(bg);
-            }
-        });
-    }
+    
 
     private void loadOrders() {
         statusLabel.setText("Loading Orders...");

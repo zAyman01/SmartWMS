@@ -11,7 +11,7 @@
     <field name="SKU" class="java.lang.String"/>
     <field name="ProductName" class="java.lang.String"/>
     <field name="BinName" class="java.lang.String"/>
-    <field name="Quantity" class="java.lang.Integer"/>
+    <field name="Quantity" class="java.lang.Object"/>
 
     <title>
         <band height="50">

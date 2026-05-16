@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.warehousewms.ui.AnalyticsFrame">
   <grid id="root" binding="rootPanel" default-binding="true" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
@@ -25,7 +25,7 @@
             </constraints>
             <properties>
               <font size="22" style="1"/>
-              <text value="&#x1F4CA;  Analytics &amp; KPIs"/>
+              <text value="Analytics &amp; KPIs"/>
             </properties>
           </component>
           <grid id="chartCont" binding="chartContainer" layout-manager="GridLayoutManager" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="10" vgap="-1">
@@ -68,3 +68,4 @@
     </children>
   </grid>
 </form>
+

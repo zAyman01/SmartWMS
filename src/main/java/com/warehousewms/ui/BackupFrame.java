@@ -29,22 +29,22 @@ public class BackupFrame extends JFrame {
         titleLabel.setForeground(ThemeConfig.TEXT_PRIMARY);
         statusLabel.setForeground(ThemeConfig.TEXT_MUTED);
 
-        applyButtonTheme(backupButton, ThemeConfig.ACCENT, ThemeConfig.ACCENT_HOVER);
+        ThemeConfig.styleButton(backupButton, ThemeConfig.ACCENT, ThemeConfig.ACCENT_HOVER, "backup");
 
         backupButton.addActionListener(e -> doBackup());
+
+        ThemeConfig.addHelpMenu(this, "Disaster Recovery & Backups\n\n" +
+            "BUSINESS OVERVIEW:\n" +
+            "The WMS database contains the lifeblood of your operation: inventory ledgers, supplier contracts, and " +
+            "customer order histories. In the event of hardware failure or cyber-attacks, a recent backup is the only " +
+            "way to avoid catastrophic data loss and business downtime.\n\n" +
+            "HOW TO USE THIS PAGE:\n" +
+            "• Run Backup: Select a secure external directory and click 'Backup'. The system will generate a highly " +
+            "compressed, secure SQL snapshot of your entire database.\n" +
+            "• Best Practice: Perform this task regularly and store the resulting file off-site or in the cloud.");
     }
 
-    private void applyButtonTheme(JButton btn, Color bg, Color hover) {
-        btn.setFont(ThemeConfig.FONT_BUTTON);
-        btn.setBackground(bg);
-        btn.setForeground(bg.equals(ThemeConfig.BG_CARD) ? ThemeConfig.TEXT_PRIMARY : Color.WHITE);
-        btn.setFocusPainted(false);
-        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btn.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override public void mouseEntered(java.awt.event.MouseEvent e) { btn.setBackground(hover); }
-            @Override public void mouseExited(java.awt.event.MouseEvent e) { btn.setBackground(bg); }
-        });
-    }
+    
 
     private void doBackup() {
         JFileChooser chooser = new JFileChooser();

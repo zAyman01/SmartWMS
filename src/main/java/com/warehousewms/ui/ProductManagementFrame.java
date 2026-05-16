@@ -56,10 +56,10 @@ public class ProductManagementFrame extends JFrame {
         statusLabel.setForeground(ThemeConfig.TEXT_MUTED);
         searchField.putClientProperty("JTextField.placeholderText", "Search products...");
 
-        applyButtonTheme(addButton, ThemeConfig.ACCENT, ThemeConfig.ACCENT_HOVER);
-        applyButtonTheme(editButton, ThemeConfig.BG_CARD, ThemeConfig.BG_HOVER);
-        applyButtonTheme(deleteButton, ThemeConfig.DANGER, ThemeConfig.DANGER.brighter());
-        applyButtonTheme(refreshButton, ThemeConfig.BG_CARD, ThemeConfig.BG_HOVER);
+        ThemeConfig.styleButton(addButton, ThemeConfig.ACCENT, ThemeConfig.ACCENT_HOVER, "add");
+        ThemeConfig.styleButton(editButton, ThemeConfig.BG_CARD, ThemeConfig.BG_HOVER, "edit");
+        ThemeConfig.styleButton(deleteButton, ThemeConfig.DANGER, ThemeConfig.DANGER.brighter(), "delete");
+        ThemeConfig.styleButton(refreshButton, ThemeConfig.BG_CARD, ThemeConfig.BG_HOVER, "refresh");
 
         // Search filter
         searchField.getDocument().addDocumentListener(new DocumentListener() {
@@ -91,26 +91,19 @@ public class ProductManagementFrame extends JFrame {
         refreshButton.addActionListener(e -> loadProducts());
 
         loadProducts();
+
+        ThemeConfig.addHelpMenu(this, "Product Catalog Management\n\n" +
+            "BUSINESS OVERVIEW:\n" +
+            "Before any inventory can be physically stored, purchased, or sold, it must exist in the Product Catalog. " +
+            "This module acts as the master database for all SKU (Stock Keeping Unit) definitions. It defines what " +
+            "an item is, its barcode, weight, and volume, which are critical for calculating shipping costs and bin capacities.\n\n" +
+            "HOW TO USE THIS PAGE:\n" +
+            "• Search: Filter the catalog by SKU or Name to quickly locate an item.\n" +
+            "• Add Product: Register a new SKU into the system so it can be procured and tracked.\n" +
+            "• Edit/Delete: Maintain data accuracy by updating product dimensions or retiring obsolete items.");
     }
 
-    private void applyButtonTheme(JButton btn, Color bg, Color hover) {
-        btn.setFont(ThemeConfig.FONT_BUTTON);
-        btn.setBackground(bg);
-        btn.setForeground(bg.equals(ThemeConfig.BG_CARD) ? ThemeConfig.TEXT_PRIMARY : Color.WHITE);
-        btn.setFocusPainted(false);
-        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btn.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseEntered(java.awt.event.MouseEvent e) {
-                btn.setBackground(hover);
-            }
-
-            @Override
-            public void mouseExited(java.awt.event.MouseEvent e) {
-                btn.setBackground(bg);
-            }
-        });
-    }
+    
 
     private void loadProducts() {
         statusLabel.setText("Loading products...");

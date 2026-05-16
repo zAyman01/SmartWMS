@@ -56,10 +56,10 @@ public class SupplierManagementFrame extends JFrame {
         statusLabel.setForeground(ThemeConfig.TEXT_MUTED);
         searchField.putClientProperty("JTextField.placeholderText", "Search suppliers...");
 
-        applyButtonTheme(addButton, ThemeConfig.ACCENT, ThemeConfig.ACCENT_HOVER);
-        applyButtonTheme(editButton, ThemeConfig.BG_CARD, ThemeConfig.BG_HOVER);
-        applyButtonTheme(deleteButton, ThemeConfig.DANGER, ThemeConfig.DANGER.brighter());
-        applyButtonTheme(refreshButton, ThemeConfig.BG_CARD, ThemeConfig.BG_HOVER);
+        ThemeConfig.styleButton(addButton, ThemeConfig.ACCENT, ThemeConfig.ACCENT_HOVER, "add");
+        ThemeConfig.styleButton(editButton, ThemeConfig.BG_CARD, ThemeConfig.BG_HOVER, "edit");
+        ThemeConfig.styleButton(deleteButton, ThemeConfig.DANGER, ThemeConfig.DANGER.brighter(), "delete");
+        ThemeConfig.styleButton(refreshButton, ThemeConfig.BG_CARD, ThemeConfig.BG_HOVER, "refresh");
 
         // Search filter
         searchField.getDocument().addDocumentListener(new DocumentListener() {
@@ -91,26 +91,19 @@ public class SupplierManagementFrame extends JFrame {
         refreshButton.addActionListener(e -> loadSuppliers());
 
         loadSuppliers();
+
+        ThemeConfig.addHelpMenu(this, "Supplier Directory\n\n" +
+            "BUSINESS OVERVIEW:\n" +
+            "Suppliers (or Vendors) are the external partners from whom you procure raw materials or retail products. " +
+            "Maintaining accurate supplier profiles is essential for the procurement cycle. Without active suppliers, " +
+            "you cannot generate Purchase Orders to replenish your warehouse stock.\n\n" +
+            "HOW TO USE THIS PAGE:\n" +
+            "• Directory Management: Add new vendor profiles including their primary contact and address.\n" +
+            "• Payment Terms: Ensure negotiated terms are accurately recorded for accounting purposes.\n" +
+            "• Prerequisite: You must have active suppliers before you can use the Purchase Order module.");
     }
 
-    private void applyButtonTheme(JButton btn, Color bg, Color hover) {
-        btn.setFont(ThemeConfig.FONT_BUTTON);
-        btn.setBackground(bg);
-        btn.setForeground(bg.equals(ThemeConfig.BG_CARD) ? ThemeConfig.TEXT_PRIMARY : Color.WHITE);
-        btn.setFocusPainted(false);
-        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btn.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseEntered(java.awt.event.MouseEvent e) {
-                btn.setBackground(hover);
-            }
-
-            @Override
-            public void mouseExited(java.awt.event.MouseEvent e) {
-                btn.setBackground(bg);
-            }
-        });
-    }
+    
 
     private void loadSuppliers() {
         statusLabel.setText("Loading suppliers...");

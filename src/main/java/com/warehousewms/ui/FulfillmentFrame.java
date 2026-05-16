@@ -56,16 +56,30 @@ public class FulfillmentFrame extends JFrame {
         orderIdField.putClientProperty("JTextField.placeholderText", "Order ID");
         pickRunIdField.putClientProperty("JTextField.placeholderText", "Pick Run ID");
 
-        applyButtonTheme(createRunButton, ThemeConfig.BG_CARD, ThemeConfig.BG_HOVER);
-        applyButtonTheme(completePickButton, ThemeConfig.SUCCESS, ThemeConfig.SUCCESS.brighter());
+        ThemeConfig.styleButton(createRunButton, ThemeConfig.BG_CARD, ThemeConfig.BG_HOVER, "add");
+        ThemeConfig.styleButton(completePickButton, ThemeConfig.SUCCESS, ThemeConfig.SUCCESS.brighter(), "check");
 
         scannerPanel = new BarcodeScannerPanel();
         scannerPanel.setParentFrame(this);
-        mainPanel.add(scannerPanel, BorderLayout.NORTH);
+        rootPanel.setLayout(new BorderLayout());
+        rootPanel.remove(mainPanel);
+        rootPanel.add(scannerPanel, BorderLayout.NORTH);
+        rootPanel.add(mainPanel, BorderLayout.CENTER);
         scannerPanel.setScanListener(this::onBarcodeScan);
 
         createRunButton.addActionListener(e -> createPickRun());
         completePickButton.addActionListener(e -> completePickRun());
+
+        ThemeConfig.addHelpMenu(this, "Fulfillment & Picking\n\n" +
+            "BUSINESS OVERVIEW:\n" +
+            "Fulfillment is the physical process of locating and retrieving items from the warehouse shelves (Bins) " +
+            "to satisfy a Customer Order. It ensures that the exact right items are packed to avoid expensive returns " +
+            "and customer dissatisfaction.\n\n" +
+            "HOW TO USE THIS PAGE:\n" +
+            "• Create Pick Run: Enter a Customer Order ID to automatically generate a picking list of items required.\n" +
+            "• Execute Pick: Load the Pick Run ID, walk the warehouse floor, and scan items as you pull them from bins.\n" +
+            "• Complete: Once the 'Picked' column matches the required amounts, click Complete to deduct the inventory " +
+            "and mark the order as fulfilled.");
     }
 
     private void onBarcodeScan(com.warehousewms.model.Product product) {
@@ -104,17 +118,7 @@ public class FulfillmentFrame extends JFrame {
         }.execute();
     }
 
-    private void applyButtonTheme(JButton btn, Color bg, Color hover) {
-        btn.setFont(ThemeConfig.FONT_BUTTON);
-        btn.setBackground(bg);
-        btn.setForeground(bg.equals(ThemeConfig.BG_CARD) ? ThemeConfig.TEXT_PRIMARY : Color.WHITE);
-        btn.setFocusPainted(false);
-        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btn.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override public void mouseEntered(java.awt.event.MouseEvent e) { btn.setBackground(hover); }
-            @Override public void mouseExited(java.awt.event.MouseEvent e) { btn.setBackground(bg); }
-        });
-    }
+    
 
     private void createPickRun() {
         String oIdStr = orderIdField.getText().trim();

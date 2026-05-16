@@ -56,10 +56,10 @@ public class CustomerManagementFrame extends JFrame {
         statusLabel.setForeground(ThemeConfig.TEXT_MUTED);
         searchField.putClientProperty("JTextField.placeholderText", "Search customers...");
 
-        applyButtonTheme(addButton, ThemeConfig.ACCENT, ThemeConfig.ACCENT_HOVER);
-        applyButtonTheme(editButton, ThemeConfig.BG_CARD, ThemeConfig.BG_HOVER);
-        applyButtonTheme(deleteButton, ThemeConfig.DANGER, ThemeConfig.DANGER.brighter());
-        applyButtonTheme(refreshButton, ThemeConfig.BG_CARD, ThemeConfig.BG_HOVER);
+        ThemeConfig.styleButton(addButton, ThemeConfig.ACCENT, ThemeConfig.ACCENT_HOVER, "add");
+        ThemeConfig.styleButton(editButton, ThemeConfig.BG_CARD, ThemeConfig.BG_HOVER, "edit");
+        ThemeConfig.styleButton(deleteButton, ThemeConfig.DANGER, ThemeConfig.DANGER.brighter(), "delete");
+        ThemeConfig.styleButton(refreshButton, ThemeConfig.BG_CARD, ThemeConfig.BG_HOVER, "refresh");
 
         // Search filter
         searchField.getDocument().addDocumentListener(new DocumentListener() {
@@ -91,26 +91,19 @@ public class CustomerManagementFrame extends JFrame {
         refreshButton.addActionListener(e -> loadCustomers());
 
         loadCustomers();
+
+        ThemeConfig.addHelpMenu(this, "Customer Directory\n\n" +
+            "BUSINESS OVERVIEW:\n" +
+            "Customers are the endpoint of your supply chain. In a B2B or direct-to-consumer model, maintaining " +
+            "a centralized database of customer profiles ensures that sales orders and outbound shipments are routed " +
+            "correctly. Accurate customer data prevents misdeliveries and improves fulfillment SLAs.\n\n" +
+            "HOW TO USE THIS PAGE:\n" +
+            "• Add/Edit Customers: Enter customer shipping addresses and contact points.\n" +
+            "• Prerequisite: You must establish customer profiles here before you can create outbound Sales Orders " +
+            "in the Customer Order module.");
     }
 
-    private void applyButtonTheme(JButton btn, Color bg, Color hover) {
-        btn.setFont(ThemeConfig.FONT_BUTTON);
-        btn.setBackground(bg);
-        btn.setForeground(bg.equals(ThemeConfig.BG_CARD) ? ThemeConfig.TEXT_PRIMARY : Color.WHITE);
-        btn.setFocusPainted(false);
-        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btn.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseEntered(java.awt.event.MouseEvent e) {
-                btn.setBackground(hover);
-            }
-
-            @Override
-            public void mouseExited(java.awt.event.MouseEvent e) {
-                btn.setBackground(bg);
-            }
-        });
-    }
+    
 
     private void loadCustomers() {
         statusLabel.setText("Loading customers...");

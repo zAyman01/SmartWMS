@@ -206,6 +206,7 @@ public class H2SchemaInitializer {
                             + ")"
             );
 
+            stmt.executeUpdate("ALTER TABLE Products ADD IF NOT EXISTS Barcode VARCHAR(100) NULL");
             stmt.executeUpdate("CREATE INDEX IF NOT EXISTS IX_Products_Barcode ON Products(Barcode)");
             stmt.executeUpdate("CREATE INDEX IF NOT EXISTS IX_Inventory_ProductId ON Inventory(ProductId)");
             stmt.executeUpdate("CREATE INDEX IF NOT EXISTS IX_Inventory_BinId ON Inventory(BinId)");

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.warehousewms.ui.UserManagementFrame">
   <grid id="root4" binding="rootPanel" default-binding="true" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
@@ -6,8 +6,8 @@
       <xy x="20" y="20" width="850" height="530"/>
     </constraints>
     <properties>
-      <preferredSize width="850" height="530"/>
       <minimumSize width="700" height="460"/>
+      <preferredSize width="850" height="530"/>
     </properties>
     <border type="none"/>
     <children>
@@ -25,7 +25,7 @@
             </constraints>
             <properties>
               <font size="22" style="1"/>
-              <text value="&#x1F512;  User Management"/>
+              <text value="User Management"/>
             </properties>
           </component>
           <component id="src4" class="javax.swing.JTextField" binding="searchField">
@@ -52,7 +52,9 @@
                     <preferred-size width="-1" height="36"/>
                   </grid>
                 </constraints>
-                <properties><text value="+ Add User"/></properties>
+                <properties>
+                  <text value="Add User"/>
+                </properties>
               </component>
               <component id="eb4" class="javax.swing.JButton" binding="editButton">
                 <constraints>
@@ -60,7 +62,9 @@
                     <preferred-size width="-1" height="36"/>
                   </grid>
                 </constraints>
-                <properties><text value="&#x270E; Edit"/></properties>
+                <properties>
+                  <text value="Edit"/>
+                </properties>
               </component>
               <component id="db4" class="javax.swing.JButton" binding="deleteButton">
                 <constraints>
@@ -68,7 +72,9 @@
                     <preferred-size width="-1" height="36"/>
                   </grid>
                 </constraints>
-                <properties><text value="&#x2716; Delete"/></properties>
+                <properties>
+                  <text value="Delete"/>
+                </properties>
               </component>
               <component id="rb4" class="javax.swing.JButton" binding="refreshButton">
                 <constraints>
@@ -76,7 +82,9 @@
                     <preferred-size width="-1" height="36"/>
                   </grid>
                 </constraints>
-                <properties><text value="&#x21BB; Refresh"/></properties>
+                <properties>
+                  <text value="Refresh"/>
+                </properties>
               </component>
               <hspacer id="hs4">
                 <constraints>
@@ -93,6 +101,7 @@
             <border type="none"/>
             <children>
               <component id="tbl4" class="javax.swing.JTable" binding="userTable">
+                <constraints/>
                 <properties/>
               </component>
             </children>

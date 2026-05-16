@@ -56,10 +56,10 @@ public class InventoryManagementFrame extends JFrame {
         statusLabel.setForeground(ThemeConfig.TEXT_MUTED);
         searchField.putClientProperty("JTextField.placeholderText", "Search Inventory...");
 
-        applyButtonTheme(adjustButton, ThemeConfig.ACCENT, ThemeConfig.ACCENT_HOVER);
-        applyButtonTheme(transferButton, ThemeConfig.WARNING, ThemeConfig.WARNING.brighter());
-        applyButtonTheme(refreshButton, ThemeConfig.BG_CARD, ThemeConfig.BG_HOVER);
-        applyButtonTheme(printButton, ThemeConfig.BG_CARD, ThemeConfig.BG_HOVER);
+        ThemeConfig.styleButton(adjustButton, ThemeConfig.ACCENT, ThemeConfig.ACCENT_HOVER, "adjust");
+        ThemeConfig.styleButton(transferButton, ThemeConfig.WARNING, ThemeConfig.WARNING.brighter(), "transfer");
+        ThemeConfig.styleButton(refreshButton, ThemeConfig.BG_CARD, ThemeConfig.BG_HOVER, "refresh");
+        ThemeConfig.styleButton(printButton, ThemeConfig.BG_CARD, ThemeConfig.BG_HOVER, "print");
 
         searchField.getDocument().addDocumentListener(new DocumentListener() {
             private void filter() {
@@ -77,7 +77,10 @@ public class InventoryManagementFrame extends JFrame {
 
         scannerPanel = new BarcodeScannerPanel();
         scannerPanel.setParentFrame(this);
-        mainPanel.add(scannerPanel, BorderLayout.NORTH);
+        rootPanel.setLayout(new BorderLayout());
+        rootPanel.remove(mainPanel);
+        rootPanel.add(scannerPanel, BorderLayout.NORTH);
+        rootPanel.add(mainPanel, BorderLayout.CENTER);
         scannerPanel.setScanListener(this::onBarcodeScan);
 
         adjustButton.addActionListener(e -> doAdjust());
@@ -86,6 +89,17 @@ public class InventoryManagementFrame extends JFrame {
         printButton.addActionListener(e -> printReport());
 
         loadInventory();
+
+        ThemeConfig.addHelpMenu(this, "Inventory Control\n\n" +
+            "BUSINESS OVERVIEW:\n" +
+            "Inventory Control is the heart of the WMS. It maintains the absolute truth of what stock is physically " +
+            "present in the warehouse and exactly where it is located. Accurate inventory prevents stockouts, reduces " +
+            "holding costs, and ensures smooth sales operations.\n\n" +
+            "HOW TO USE THIS PAGE:\n" +
+            "• Audit & Scan: Search for an item or use a barcode scanner to instantly verify its bin location and quantity.\n" +
+            "• Stock Transfers: Move inventory between bins to optimize space or consolidate storage.\n" +
+            "• Adjustments: Correct discrepancies discovered during physical cycle counts.\n" +
+            "• Print Report: Generate physical inventory manifests for tax or auditing purposes.");
     }
 
     private void onBarcodeScan(com.warehousewms.model.Product product) {
@@ -93,24 +107,7 @@ public class InventoryManagementFrame extends JFrame {
         statusLabel.setText("Scanned: " + product.getSku() + " \u2013 " + product.getName());
     }
 
-    private void applyButtonTheme(JButton btn, Color bg, Color hover) {
-        btn.setFont(ThemeConfig.FONT_BUTTON);
-        btn.setBackground(bg);
-        btn.setForeground(bg.equals(ThemeConfig.BG_CARD) ? ThemeConfig.TEXT_PRIMARY : Color.WHITE);
-        btn.setFocusPainted(false);
-        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btn.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseEntered(java.awt.event.MouseEvent e) {
-                btn.setBackground(hover);
-            }
-
-            @Override
-            public void mouseExited(java.awt.event.MouseEvent e) {
-                btn.setBackground(bg);
-            }
-        });
-    }
+    
 
     private void loadInventory() {
         statusLabel.setText("Loading Inventory...");

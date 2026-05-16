@@ -66,10 +66,10 @@ public class UserManagementFrame extends JFrame {
         statusLabel.setForeground(ThemeConfig.TEXT_MUTED);
         searchField.putClientProperty("JTextField.placeholderText", "Search users...");
 
-        applyButtonTheme(addButton, ThemeConfig.ACCENT, ThemeConfig.ACCENT_HOVER);
-        applyButtonTheme(editButton, ThemeConfig.BG_CARD, ThemeConfig.BG_HOVER);
-        applyButtonTheme(deleteButton, ThemeConfig.DANGER, ThemeConfig.DANGER.brighter());
-        applyButtonTheme(refreshButton, ThemeConfig.BG_CARD, ThemeConfig.BG_HOVER);
+        ThemeConfig.styleButton(addButton, ThemeConfig.ACCENT, ThemeConfig.ACCENT_HOVER, "add");
+        ThemeConfig.styleButton(editButton, ThemeConfig.BG_CARD, ThemeConfig.BG_HOVER, "edit");
+        ThemeConfig.styleButton(deleteButton, ThemeConfig.DANGER, ThemeConfig.DANGER.brighter(), "delete");
+        ThemeConfig.styleButton(refreshButton, ThemeConfig.BG_CARD, ThemeConfig.BG_HOVER, "refresh");
 
         // Search filter
         searchField.getDocument().addDocumentListener(new DocumentListener() {
@@ -101,26 +101,18 @@ public class UserManagementFrame extends JFrame {
         refreshButton.addActionListener(e -> loadUsers());
 
         loadUsers();
+
+        ThemeConfig.addHelpMenu(this, "System Security & Users\n\n" +
+            "BUSINESS OVERVIEW:\n" +
+            "Controlling access to the warehouse management system is critical for operational integrity and security. " +
+            "The User Management module ensures that only authorized personnel can log in, edit ledgers, or perform " +
+            "sensitive administrative tasks.\n\n" +
+            "HOW TO USE THIS PAGE:\n" +
+            "• Provision Accounts: Add new warehouse staff and assign them appropriate roles (Admin vs User).\n" +
+            "• Manage Access: Deactivate accounts for departing employees to prevent unauthorized access while preserving their historical audit trail.");
     }
 
-    private void applyButtonTheme(JButton btn, Color bg, Color hover) {
-        btn.setFont(ThemeConfig.FONT_BUTTON);
-        btn.setBackground(bg);
-        btn.setForeground(bg.equals(ThemeConfig.BG_CARD) ? ThemeConfig.TEXT_PRIMARY : Color.WHITE);
-        btn.setFocusPainted(false);
-        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btn.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseEntered(java.awt.event.MouseEvent e) {
-                btn.setBackground(hover);
-            }
-
-            @Override
-            public void mouseExited(java.awt.event.MouseEvent e) {
-                btn.setBackground(bg);
-            }
-        });
-    }
+    
 
     private void loadUsers() {
         statusLabel.setText("Loading users...");

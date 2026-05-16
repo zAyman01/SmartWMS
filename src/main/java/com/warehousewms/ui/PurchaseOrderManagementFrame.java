@@ -55,9 +55,9 @@ public class PurchaseOrderManagementFrame extends JFrame {
         statusLabel.setForeground(ThemeConfig.TEXT_MUTED);
         searchField.putClientProperty("JTextField.placeholderText", "Search POs...");
 
-        applyButtonTheme(addButton, ThemeConfig.ACCENT, ThemeConfig.ACCENT_HOVER);
-        applyButtonTheme(editButton, ThemeConfig.BG_CARD, ThemeConfig.BG_HOVER);
-        applyButtonTheme(refreshButton, ThemeConfig.BG_CARD, ThemeConfig.BG_HOVER);
+        ThemeConfig.styleButton(addButton, ThemeConfig.ACCENT, ThemeConfig.ACCENT_HOVER, "add");
+        ThemeConfig.styleButton(editButton, ThemeConfig.BG_CARD, ThemeConfig.BG_HOVER, "edit");
+        ThemeConfig.styleButton(refreshButton, ThemeConfig.BG_CARD, ThemeConfig.BG_HOVER, "refresh");
 
         searchField.getDocument().addDocumentListener(new DocumentListener() {
             private void filter() {
@@ -86,26 +86,20 @@ public class PurchaseOrderManagementFrame extends JFrame {
         refreshButton.addActionListener(e -> loadPOs());
 
         loadPOs();
+
+        ThemeConfig.addHelpMenu(this, "Purchase Orders (Inbound)\n\n" +
+            "BUSINESS OVERVIEW:\n" +
+            "A Purchase Order (PO) is a legally binding contract sent to a supplier to procure goods. In the WMS workflow, " +
+            "the PO informs the Receiving team what products to expect and in what quantities. It is the very first step " +
+            "in the inbound inventory cycle.\n\n" +
+            "HOW TO USE THIS PAGE:\n" +
+            "• Create PO: Initiate a new order by selecting a Supplier and an Expected Delivery Date.\n" +
+            "• Manage Lines: After creating the header, click 'Manage Lines' to specify exactly which products and quantities you are buying.\n" +
+            "• Next Steps: Once a PO is generated and sent to the supplier, the warehouse awaits the physical delivery, " +
+            "which will be processed in the 'Receiving' module against this PO ID.");
     }
 
-    private void applyButtonTheme(JButton btn, Color bg, Color hover) {
-        btn.setFont(ThemeConfig.FONT_BUTTON);
-        btn.setBackground(bg);
-        btn.setForeground(bg.equals(ThemeConfig.BG_CARD) ? ThemeConfig.TEXT_PRIMARY : Color.WHITE);
-        btn.setFocusPainted(false);
-        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btn.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseEntered(java.awt.event.MouseEvent e) {
-                btn.setBackground(hover);
-            }
-
-            @Override
-            public void mouseExited(java.awt.event.MouseEvent e) {
-                btn.setBackground(bg);
-            }
-        });
-    }
+    
 
     private void loadPOs() {
         statusLabel.setText("Loading POs...");

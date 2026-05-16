@@ -13,13 +13,11 @@ public class App {
 
     public static void main(String[] args) {
         Thread.setDefaultUncaughtExceptionHandler((t, e) -> {
-            logger.error("An unexpected error occurred in thread " + t.getName(), e);
-            SwingUtilities.invokeLater(() -> {
-                JOptionPane.showMessageDialog(null,
-                        "An unexpected error occurred:\n" + e.getMessage(),
-                        "System Error",
-                        JOptionPane.ERROR_MESSAGE);
-            });
+            logger.error("An unexpected error occurred in thread {}", t.getName(), e);
+            SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(null,
+                    "An unexpected error occurred:\n" + e.getMessage(),
+                    "System Error",
+                    JOptionPane.ERROR_MESSAGE));
         });
 
         ThemeConfig.install();

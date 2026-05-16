@@ -39,6 +39,15 @@ public class AnalyticsFrame extends JFrame {
         statusLabel.setForeground(ThemeConfig.TEXT_MUTED);
 
         loadCharts();
+
+        ThemeConfig.addHelpMenu(this, "Business Analytics\n\n" +
+            "BUSINESS OVERVIEW:\n" +
+            "Data drives modern supply chains. The Analytics module translates raw database rows into visual " +
+            "intelligence. Management uses these insights to forecast demand, identify dead stock, and evaluate " +
+            "the efficiency of the fulfillment process over time.\n\n" +
+            "HOW TO USE THIS PAGE:\n" +
+            "• Inventory Overview: Review the bar chart to spot overstocked items or critically low inventory.\n" +
+            "• Order Health: The pie chart provides a real-time status breakdown (Pending vs. Fulfilled) to identify bottlenecks.");
     }
 
     private void loadCharts() {

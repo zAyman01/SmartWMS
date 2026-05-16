@@ -63,10 +63,10 @@ public class BinManagementFrame extends JFrame {
         treeScrollPane.getViewport().setBackground(ThemeConfig.BG_SECONDARY);
         binTree.setBackground(ThemeConfig.BG_SECONDARY);
 
-        applyButtonTheme(addButton, ThemeConfig.ACCENT, ThemeConfig.ACCENT_HOVER);
-        applyButtonTheme(editButton, ThemeConfig.BG_CARD, ThemeConfig.BG_HOVER);
-        applyButtonTheme(deleteButton, ThemeConfig.DANGER, ThemeConfig.DANGER.brighter());
-        applyButtonTheme(refreshButton, ThemeConfig.BG_CARD, ThemeConfig.BG_HOVER);
+        ThemeConfig.styleButton(addButton, ThemeConfig.ACCENT, ThemeConfig.ACCENT_HOVER, "add");
+        ThemeConfig.styleButton(editButton, ThemeConfig.BG_CARD, ThemeConfig.BG_HOVER, "edit");
+        ThemeConfig.styleButton(deleteButton, ThemeConfig.DANGER, ThemeConfig.DANGER.brighter(), "delete");
+        ThemeConfig.styleButton(refreshButton, ThemeConfig.BG_CARD, ThemeConfig.BG_HOVER, "refresh");
 
         // Listeners
         addButton.addActionListener(e -> addBin());
@@ -75,26 +75,20 @@ public class BinManagementFrame extends JFrame {
         refreshButton.addActionListener(e -> loadBins());
 
         loadBins();
+
+        ThemeConfig.addHelpMenu(this, "Warehouse Bin Management\n\n" +
+            "BUSINESS OVERVIEW:\n" +
+            "Bins represent the physical storage locations within your warehouse facility (e.g., A1-Shelf2). " +
+            "Without a proper bin structure, locating stock for picking is nearly impossible, leading to delayed " +
+            "fulfillments. This module allows you to map out your facility's physical layout electronically.\n\n" +
+            "HOW TO USE THIS PAGE:\n" +
+            "• Define Locations: Create bins, assign them to logical zones (like 'Cold Storage' or 'Bulk'), and " +
+            "define their physical constraints (max weight and volume).\n" +
+            "• Navigation: The tree view on the left helps you visualize the zone/bin hierarchy.\n" +
+            "• Maintenance: Ensure bins are marked 'Active' before receiving goods into them.");
     }
 
-    private void applyButtonTheme(JButton btn, Color bg, Color hover) {
-        btn.setFont(ThemeConfig.FONT_BUTTON);
-        btn.setBackground(bg);
-        btn.setForeground(bg.equals(ThemeConfig.BG_CARD) ? ThemeConfig.TEXT_PRIMARY : Color.WHITE);
-        btn.setFocusPainted(false);
-        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btn.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseEntered(java.awt.event.MouseEvent e) {
-                btn.setBackground(hover);
-            }
-
-            @Override
-            public void mouseExited(java.awt.event.MouseEvent e) {
-                btn.setBackground(bg);
-            }
-        });
-    }
+    
 
     private void loadBins() {
         statusLabel.setText("Loading bins...");

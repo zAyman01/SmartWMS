@@ -13,6 +13,7 @@ import java.awt.event.MouseEvent;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import com.formdev.flatlaf.extras.FlatSVGIcon;
 
 /**
  * Centralised FlatLaf Dark theme configuration and reusable UI components.
@@ -121,6 +122,33 @@ public final class ThemeConfig {
         btn.addMouseListener(new MouseAdapter() {
             @Override public void mouseEntered(MouseEvent e) { btn.setBackground(hover); }
             @Override public void mouseExited(MouseEvent e)  { btn.setBackground(normal); }
+        });
+    }
+
+    /** Styles an existing button with theme colors and an optional SVG icon. */
+    public static void styleButton(JButton btn, Color bg, Color hover, String iconName) {
+        btn.setFont(FONT_BUTTON);
+        btn.setBackground(bg);
+        Color fg = bg.equals(BG_CARD) ? TEXT_PRIMARY : Color.WHITE;
+        btn.setForeground(fg);
+        btn.setFocusPainted(false);
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        
+        if (iconName != null && !iconName.isEmpty()) {
+            btn.setIcon(getIcon(iconName, 16, 16, fg));
+            btn.setIconTextGap(8);
+        }
+
+        // Remove old mouse listeners to prevent duplicates if called multiple times
+        for (java.awt.event.MouseListener ml : btn.getMouseListeners()) {
+            if (ml.getClass().getName().contains("ThemeConfig")) {
+                btn.removeMouseListener(ml);
+            }
+        }
+        
+        btn.addMouseListener(new MouseAdapter() {
+            @Override public void mouseEntered(MouseEvent e) { btn.setBackground(hover); }
+            @Override public void mouseExited(MouseEvent e)  { btn.setBackground(bg); }
         });
     }
 
@@ -252,5 +280,66 @@ public final class ThemeConfig {
         }
         cachedEmojiFontFamily = "";
         return null;
+    }
+
+    // ── SVG Icons ────────────────────────────────────────────────────────
+    
+    /** Returns a recolored SVG icon. */
+    public static FlatSVGIcon getIcon(String name, int width, int height, Color color) {
+        FlatSVGIcon icon = new FlatSVGIcon("icons/" + name + ".svg", width, height);
+        if (color != null) {
+            icon.setColorFilter(new FlatSVGIcon.ColorFilter(colorFilter -> color));
+        }
+        return icon;
+    }
+
+    // ── Help Dialog ──────────────────────────────────────────────────────
+    
+    /** Shows a standard help dialog for a specific page. */
+    public static void showHelpDialog(Component parent, String title, String content) {
+        JTextArea textArea = new JTextArea(content);
+        textArea.setFont(FONT_BODY);
+        textArea.setForeground(TEXT_PRIMARY);
+        textArea.setBackground(BG_CARD);
+        textArea.setEditable(false);
+        textArea.setLineWrap(true);
+        textArea.setWrapStyleWord(true);
+        textArea.setBorder(new EmptyBorder(10, 10, 10, 10));
+
+        JScrollPane scrollPane = new JScrollPane(textArea);
+        scrollPane.setPreferredSize(new Dimension(400, 300));
+        scrollPane.setBorder(BorderFactory.createLineBorder(BORDER));
+        scrollPane.getViewport().setBackground(BG_CARD);
+
+        JOptionPane.showMessageDialog(parent, scrollPane, "Help: " + title, JOptionPane.PLAIN_MESSAGE, getIcon("info", 32, 32, ACCENT));
+    }
+
+    /** Adds a Help menu to the given frame's menu bar. */
+    public static void addHelpMenu(JFrame frame, String content) {
+        JMenuBar menuBar = frame.getJMenuBar();
+        if (menuBar == null) {
+            menuBar = new JMenuBar();
+            menuBar.setOpaque(false);
+            menuBar.setBackground(new Color(0, 0, 0, 0));
+            menuBar.setBorder(null);
+            frame.setJMenuBar(menuBar);
+            // Attempt to embed menu bar into the window title bar
+            frame.getRootPane().putClientProperty("JRootPane.menuBarEmbedded", true);
+        }
+        menuBar.add(Box.createHorizontalGlue()); // Push right
+        
+        JButton helpBtn = new JButton(getIcon("info", 18, 18, ACCENT));
+        helpBtn.setToolTipText("Help for this page");
+        helpBtn.setBorderPainted(false);
+        helpBtn.setContentAreaFilled(false);
+        helpBtn.setFocusPainted(false);
+        helpBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        helpBtn.addMouseListener(new MouseAdapter() {
+            @Override public void mouseEntered(MouseEvent e) { helpBtn.setIcon(getIcon("info", 18, 18, ACCENT_HOVER)); }
+            @Override public void mouseExited(MouseEvent e) { helpBtn.setIcon(getIcon("info", 18, 18, ACCENT)); }
+        });
+        helpBtn.addActionListener(e -> showHelpDialog(frame, frame.getTitle(), content));
+        
+        menuBar.add(helpBtn);
     }
 }

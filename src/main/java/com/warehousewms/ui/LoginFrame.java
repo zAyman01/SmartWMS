@@ -107,8 +107,8 @@ public class LoginFrame extends JFrame {
         // Title styling
         titleLabel.setForeground(ThemeConfig.ACCENT);
 
-        // App icon emoji font
-        ThemeConfig.applyEmojiFont(appIconLabel);
+        // App icon
+        appIconLabel.setIcon(ThemeConfig.getIcon("package", 48, 48, ThemeConfig.ACCENT));
 
         // Forgot password link
         forgotPasswordLabel.setForeground(ThemeConfig.ACCENT);

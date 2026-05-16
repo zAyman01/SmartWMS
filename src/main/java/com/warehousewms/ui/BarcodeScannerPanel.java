@@ -34,7 +34,7 @@ public class BarcodeScannerPanel extends JPanel {
                 BorderFactory.createMatteBorder(0, 0, 1, 0, ThemeConfig.BORDER),
                 BorderFactory.createEmptyBorder(8, 12, 8, 12)));
 
-        iconLabel = new JLabel("\uD83D\uDCF7");
+        iconLabel = new JLabel("\u2302");
         iconLabel.setFont(ThemeConfig.FONT_HEADING);
         iconLabel.setForeground(ThemeConfig.TEXT_MUTED);
 
@@ -63,8 +63,8 @@ public class BarcodeScannerPanel extends JPanel {
             }
         });
 
-        cameraButton = new JButton("\uD83D\uDCF7");
-        cameraButton.setFont(new Font("Segoe UI", Font.PLAIN, 20));
+        cameraButton = new JButton("CAM");
+        cameraButton.setFont(new Font("Segoe UI", Font.BOLD, 11));
         cameraButton.setBackground(ThemeConfig.BG_SECONDARY);
         cameraButton.setForeground(ThemeConfig.TEXT_PRIMARY);
         cameraButton.setFocusPainted(false);

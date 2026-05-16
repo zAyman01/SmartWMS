@@ -53,16 +53,30 @@ public class ReceivingFrame extends JFrame {
         statusLabel.setForeground(ThemeConfig.TEXT_MUTED);
         poIdField.putClientProperty("JTextField.placeholderText", "PO ID");
 
-        applyButtonTheme(fetchButton, ThemeConfig.BG_CARD, ThemeConfig.BG_HOVER);
-        applyButtonTheme(receiveButton, ThemeConfig.ACCENT, ThemeConfig.ACCENT_HOVER);
+        ThemeConfig.styleButton(fetchButton, ThemeConfig.BG_CARD, ThemeConfig.BG_HOVER, "fetch");
+        ThemeConfig.styleButton(receiveButton, ThemeConfig.ACCENT, ThemeConfig.ACCENT_HOVER, "check");
 
         scannerPanel = new BarcodeScannerPanel();
         scannerPanel.setParentFrame(this);
-        mainPanel.add(scannerPanel, BorderLayout.NORTH);
+        rootPanel.setLayout(new BorderLayout());
+        rootPanel.remove(mainPanel);
+        rootPanel.add(scannerPanel, BorderLayout.NORTH);
+        rootPanel.add(mainPanel, BorderLayout.CENTER);
         scannerPanel.setScanListener(this::onBarcodeScan);
 
         fetchButton.addActionListener(e -> fetchLines());
         receiveButton.addActionListener(e -> receiveSelected());
+
+        ThemeConfig.addHelpMenu(this, "Receiving Dock Operations\n\n" +
+            "BUSINESS OVERVIEW:\n" +
+            "Receiving is the critical process of accepting physical goods into the warehouse. When a truck arrives, " +
+            "the receiving clerk must match the physical items against the original Purchase Order. This module acts as " +
+            "the gatekeeper, turning expected inbound shipments into real, sellable on-hand inventory.\n\n" +
+            "HOW TO USE THIS PAGE:\n" +
+            "• Fetch PO: Enter the ID of the Purchase Order that the truck is delivering against to load the expected items.\n" +
+            "• Scan & Verify: Use a barcode scanner to scan incoming items. This ensures you are receiving the correct SKUs.\n" +
+            "• Putaway: Once quantities are verified in the 'To Receive' column, click 'Receive Items' to officially " +
+            "inject the stock into a specific warehouse Bin. This updates the ledger instantly.");
     }
 
     private void onBarcodeScan(com.warehousewms.model.Product product) {
@@ -85,17 +99,7 @@ public class ReceivingFrame extends JFrame {
         statusLabel.setText("Scanned product not in this PO: " + product.getSku());
     }
 
-    private void applyButtonTheme(JButton btn, Color bg, Color hover) {
-        btn.setFont(ThemeConfig.FONT_BUTTON);
-        btn.setBackground(bg);
-        btn.setForeground(bg.equals(ThemeConfig.BG_CARD) ? ThemeConfig.TEXT_PRIMARY : Color.WHITE);
-        btn.setFocusPainted(false);
-        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btn.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override public void mouseEntered(java.awt.event.MouseEvent e) { btn.setBackground(hover); }
-            @Override public void mouseExited(java.awt.event.MouseEvent e) { btn.setBackground(bg); }
-        });
-    }
+    
 
     private void fetchLines() {
         String poIdStr = poIdField.getText().trim();

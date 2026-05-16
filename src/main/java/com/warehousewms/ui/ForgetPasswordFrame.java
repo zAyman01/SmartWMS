@@ -75,7 +75,8 @@ public class ForgetPasswordFrame extends JFrame {
         titleLabel.setForeground(ThemeConfig.ACCENT);
         backToLoginLabel.setForeground(ThemeConfig.ACCENT);
 
-        ThemeConfig.applyEmojiFont(appIconLabel);
+        // App icon
+        appIconLabel.setIcon(ThemeConfig.getIcon("package", 48, 48, ThemeConfig.ACCENT));
     }
 
     private void handlePasswordReset() {
