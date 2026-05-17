@@ -30,7 +30,7 @@ public class UserManagementFrame extends JFrame {
 
     private static final String[] ROLES = {"Admin", "Supervisor", "Picker", "Operator"};
     private final DefaultTableModel tableModel = new DefaultTableModel(
-            new Object[]{"Id", "Username", "Full Name", "Role"}, 0) {
+            new Object[]{"ID", "Username", "Full Name", "Role"}, 0) {
         @Override
         public boolean isCellEditable(int row, int column) {
             return false;
@@ -75,7 +75,7 @@ public class UserManagementFrame extends JFrame {
         searchField.getDocument().addDocumentListener(new DocumentListener() {
             private void filter() {
                 String t = searchField.getText().trim();
-                sorter.setRowFilter(t.isEmpty() ? null : RowFilter.regexFilter("(?i)" + t));
+                sorter.setRowFilter(t.isEmpty() ? null : RowFilter.regexFilter("(?i)" + java.util.regex.Pattern.quote(t)));
             }
 
             @Override

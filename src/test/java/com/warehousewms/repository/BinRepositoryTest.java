@@ -120,6 +120,6 @@ class BinRepositoryTest {
         Bin bin = new Bin();
         bin.setName("Shelf-01");
         bin.setBinType("Shelf");
-        assertEquals("Shelf-01 [Shelf]", bin.toString());
+        assertEquals("0 - Shelf-01 [Shelf]", bin.toString());
     }
 }

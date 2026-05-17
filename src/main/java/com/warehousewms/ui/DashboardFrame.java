@@ -173,7 +173,7 @@ public class DashboardFrame extends JFrame {
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 g2.setColor(ThemeConfig.ACCENT);
                 g2.fillOval(0, 0, 36, 36);
-                String initials = getInitials(SessionContext.getCurrentUser().getFullName());
+                String initials = getInitials(SessionContext.getCurrentUser() != null ? SessionContext.getCurrentUser().getFullName() : "?");
                 g2.setColor(Color.WHITE);
                 g2.setFont(new Font("Segoe UI", Font.BOLD, 14));
                 FontMetrics fm = g2.getFontMetrics();
@@ -189,10 +189,10 @@ public class DashboardFrame extends JFrame {
         JPanel info = new JPanel();
         info.setLayout(new BoxLayout(info, BoxLayout.Y_AXIS));
         info.setOpaque(false);
-        JLabel nameLabel = new JLabel(SessionContext.getCurrentUser().getFullName());
+        JLabel nameLabel = new JLabel(SessionContext.getCurrentUser() != null ? SessionContext.getCurrentUser().getFullName() : "Guest");
         nameLabel.setFont(ThemeConfig.FONT_BODY);
         nameLabel.setForeground(ThemeConfig.TEXT_PRIMARY);
-        JLabel roleLabel = new JLabel(SessionContext.getCurrentUser().getRole());
+        JLabel roleLabel = new JLabel(SessionContext.getCurrentUser() != null ? SessionContext.getCurrentUser().getRole() : "N/A");
         roleLabel.setFont(ThemeConfig.FONT_SMALL);
         roleLabel.setForeground(ThemeConfig.TEXT_MUTED);
         info.add(nameLabel);
@@ -233,7 +233,7 @@ public class DashboardFrame extends JFrame {
 
         // Greeting
         String greeting = getGreeting();
-        JLabel greetLabel = new JLabel(greeting + ", " + SessionContext.getCurrentUser().getFullName() + "!");
+        JLabel greetLabel = new JLabel(greeting + ", " + (SessionContext.getCurrentUser() != null ? SessionContext.getCurrentUser().getFullName() : "Guest") + "!");
         greetLabel.setFont(new Font("Segoe UI", Font.BOLD, 26));
         greetLabel.setForeground(ThemeConfig.TEXT_PRIMARY);
         greetLabel.setAlignmentX(Component.LEFT_ALIGNMENT);

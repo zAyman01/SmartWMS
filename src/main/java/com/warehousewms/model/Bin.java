@@ -67,7 +67,7 @@ public class Bin {
 
     @Override
     public String toString() {
-        return name + " [" + binType + "]";
+        return binId + " - " + name + " [" + binType + "]";
     }
 }
 

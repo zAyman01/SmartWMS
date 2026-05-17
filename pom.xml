@@ -47,7 +47,7 @@
         <dependency>
             <groupId>net.sf.jasperreports</groupId>
             <artifactId>jasperreports</artifactId>
-            <version>7.0.4</version>
+            <version>6.21.3</version>
         </dependency>
         <!-- SLF4J simple logger to silence missing binder warnings -->
         <dependency>

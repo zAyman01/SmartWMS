@@ -34,9 +34,7 @@ public class BarcodeScannerPanel extends JPanel {
                 BorderFactory.createMatteBorder(0, 0, 1, 0, ThemeConfig.BORDER),
                 BorderFactory.createEmptyBorder(8, 12, 8, 12)));
 
-        iconLabel = new JLabel("\u2302");
-        iconLabel.setFont(ThemeConfig.FONT_HEADING);
-        iconLabel.setForeground(ThemeConfig.TEXT_MUTED);
+        iconLabel = new JLabel(ThemeConfig.getIcon("scanner", 20, 20, ThemeConfig.TEXT_MUTED));
 
         scanField = new JTextField();
         scanField.putClientProperty("JTextField.placeholderText", "Type or scan barcode...");

@@ -27,7 +27,7 @@ public class CustomerManagementFrame extends JFrame {
     private JTable customerTable;
     private JLabel statusLabel;
 
-    private final DefaultTableModel tableModel = new DefaultTableModel(new Object[]{"Id", "Name", "Contact", "Email", "Phone"}, 0) {
+    private final DefaultTableModel tableModel = new DefaultTableModel(new Object[]{"ID", "Name", "Contact", "Email", "Phone"}, 0) {
         @Override
         public boolean isCellEditable(int row, int column) {
             return false;
@@ -65,7 +65,7 @@ public class CustomerManagementFrame extends JFrame {
         searchField.getDocument().addDocumentListener(new DocumentListener() {
             private void filter() {
                 String t = searchField.getText().trim();
-                sorter.setRowFilter(t.isEmpty() ? null : RowFilter.regexFilter("(?i)" + t));
+                sorter.setRowFilter(t.isEmpty() ? null : RowFilter.regexFilter("(?i)" + java.util.regex.Pattern.quote(t)));
             }
 
             @Override

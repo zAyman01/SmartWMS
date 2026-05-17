@@ -319,24 +319,23 @@ public final class ThemeConfig {
         JMenuBar menuBar = frame.getJMenuBar();
         if (menuBar == null) {
             menuBar = new JMenuBar();
-            menuBar.setOpaque(false);
-            menuBar.setBackground(new Color(0, 0, 0, 0));
+            menuBar.setOpaque(true);
+            menuBar.setBackground(BG_PRIMARY);
             menuBar.setBorder(null);
             frame.setJMenuBar(menuBar);
-            // Attempt to embed menu bar into the window title bar
-            frame.getRootPane().putClientProperty("JRootPane.menuBarEmbedded", true);
+            frame.getRootPane().putClientProperty("JRootPane.menuBarEmbedded", false);
         }
         menuBar.add(Box.createHorizontalGlue()); // Push right
         
-        JButton helpBtn = new JButton(getIcon("info", 18, 18, ACCENT));
+        JButton helpBtn = new JButton(getIcon("info", 18, 18, TEXT_MUTED));
         helpBtn.setToolTipText("Help for this page");
         helpBtn.setBorderPainted(false);
         helpBtn.setContentAreaFilled(false);
         helpBtn.setFocusPainted(false);
         helpBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         helpBtn.addMouseListener(new MouseAdapter() {
-            @Override public void mouseEntered(MouseEvent e) { helpBtn.setIcon(getIcon("info", 18, 18, ACCENT_HOVER)); }
-            @Override public void mouseExited(MouseEvent e) { helpBtn.setIcon(getIcon("info", 18, 18, ACCENT)); }
+            @Override public void mouseEntered(MouseEvent e) { helpBtn.setIcon(getIcon("info", 18, 18, TEXT_PRIMARY)); }
+            @Override public void mouseExited(MouseEvent e) { helpBtn.setIcon(getIcon("info", 18, 18, TEXT_MUTED)); }
         });
         helpBtn.addActionListener(e -> showHelpDialog(frame, frame.getTitle(), content));
         

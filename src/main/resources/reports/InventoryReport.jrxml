@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE jasperReport PUBLIC "//JasperReports//DTD Report Design//EN" "http://jasperreports.sourceforge.net/dtds/jasperreport.dtd">
-<jasperReport name="InventoryReport" pageWidth="595" pageHeight="842" columnWidth="515" leftMargin="40" rightMargin="40" topMargin="50" bottomMargin="50">
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              name="InventoryReport" pageWidth="595" pageHeight="842" columnWidth="515" leftMargin="40" rightMargin="40" topMargin="50" bottomMargin="50">
     <queryString>
         <![CDATA[SELECT p.SKU, p.Name AS ProductName, b.Name AS BinName, i.Quantity 
                  FROM Inventory i 
@@ -11,7 +11,7 @@
     <field name="SKU" class="java.lang.String"/>
     <field name="ProductName" class="java.lang.String"/>
     <field name="BinName" class="java.lang.String"/>
-    <field name="Quantity" class="java.lang.Object"/>
+    <field name="Quantity" class="java.lang.Integer"/>
 
     <title>
         <band height="50">

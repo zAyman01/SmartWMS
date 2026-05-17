@@ -26,9 +26,10 @@ public class ReceivingFrame extends JFrame {
     private JTable linesTable;
     private JLabel statusLabel;
     private BarcodeScannerPanel scannerPanel;
+    private final java.util.Map<String, Integer> productNameToId = new java.util.HashMap<>();
 
     private final DefaultTableModel tableModel = new DefaultTableModel(
-            new Object[]{"PO Line Id", "Product Id", "Ordered", "Received", "To Receive (Input)"}, 0) {
+            new Object[]{"ID", "Product Name", "Ordered", "Received", "To Receive (Input)"}, 0) {
         @Override
         public boolean isCellEditable(int row, int column) {
             return column == 4;
@@ -51,7 +52,7 @@ public class ReceivingFrame extends JFrame {
         toolbarPanel.setBackground(ThemeConfig.BG_PRIMARY);
         titleLabel.setForeground(ThemeConfig.TEXT_PRIMARY);
         statusLabel.setForeground(ThemeConfig.TEXT_MUTED);
-        poIdField.putClientProperty("JTextField.placeholderText", "PO ID");
+        poIdField.putClientProperty("JTextField.placeholderText", "Enter PO #");
 
         ThemeConfig.styleButton(fetchButton, ThemeConfig.BG_CARD, ThemeConfig.BG_HOVER, "fetch");
         ThemeConfig.styleButton(receiveButton, ThemeConfig.ACCENT, ThemeConfig.ACCENT_HOVER, "check");
@@ -81,9 +82,10 @@ public class ReceivingFrame extends JFrame {
 
     private void onBarcodeScan(com.warehousewms.model.Product product) {
         int pid = product.getProductId();
+        String pName = product.getName();
         for (int i = 0; i < tableModel.getRowCount(); i++) {
-            int rowPid = (int) tableModel.getValueAt(i, 1);
-            if (rowPid == pid) {
+            String rowPName = (String) tableModel.getValueAt(i, 1);
+            if (pName.equals(rowPName)) {
                 int ordered = (int) tableModel.getValueAt(i, 2);
                 int received = (int) tableModel.getValueAt(i, 3);
                 int remaining = ordered - received;
@@ -108,8 +110,16 @@ public class ReceivingFrame extends JFrame {
             int poId = Integer.parseInt(poIdStr);
             statusLabel.setText("Fetching...");
             new SwingWorker<List<PurchaseOrderLine>, Void>() {
+                private java.util.Map<Integer, String> productNames = new java.util.HashMap<>();
+
                 @Override protected List<PurchaseOrderLine> doInBackground() throws Exception {
                     PurchaseOrderService svc = new PurchaseOrderService(new DatabaseManager().getDataSourceWithFallback());
+                    com.warehousewms.service.ProductService ps = new com.warehousewms.service.ProductService(new DatabaseManager().getDataSourceWithFallback());
+                    productNameToId.clear();
+                    for(com.warehousewms.model.Product p : ps.listAll()) {
+                        productNames.put(p.getProductId(), p.getName());
+                        productNameToId.put(p.getName(), p.getProductId());
+                    }
                     return svc.getLinesForPO(poId);
                 }
                 @Override protected void done() {
@@ -117,8 +127,9 @@ public class ReceivingFrame extends JFrame {
                         List<PurchaseOrderLine> lines = get();
                         tableModel.setRowCount(0);
                         for (PurchaseOrderLine l : lines) {
+                            String pName = productNames.getOrDefault(l.getProductId(), "Unknown");
                             tableModel.addRow(new Object[]{
-                                    l.getPoLineId(), l.getProductId(), l.getQuantityOrdered(), l.getQuantityReceived(), 0
+                                    l.getPoLineId(), pName, l.getQuantityOrdered(), l.getQuantityReceived(), 0
                             });
                         }
                         statusLabel.setText("Fetched " + lines.size() + " lines.");
@@ -128,7 +139,7 @@ public class ReceivingFrame extends JFrame {
                 }
             }.execute();
         } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "Invalid PO Id");
+            JOptionPane.showMessageDialog(this, "Invalid PO number");
         }
     }
 
@@ -137,18 +148,55 @@ public class ReceivingFrame extends JFrame {
         String poIdStr = poIdField.getText().trim();
         if (poIdStr.isEmpty()) return;
         
-        int poId = Integer.parseInt(poIdStr);
-        String binIdStr = JOptionPane.showInputDialog(this, "Enter Bin ID to receive into:", "Bin Selection", JOptionPane.QUESTION_MESSAGE);
-        if (binIdStr == null || binIdStr.trim().isEmpty()) return;
+        int poId;
+        try {
+            poId = Integer.parseInt(poIdStr);
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "Invalid PO number.");
+            return;
+        }
+
+        // Load available bins for selection
+        String[] binNames;
+        java.util.Map<String, Integer> binLookup = new java.util.HashMap<>();
+        try {
+            com.warehousewms.service.BinService bs = new com.warehousewms.service.BinService(new DatabaseManager().getDataSourceWithFallback());
+            for (com.warehousewms.model.Bin b : bs.listAll()) {
+                binLookup.put(b.getName(), b.getBinId());
+            }
+            binNames = binLookup.keySet().stream().sorted().toArray(String[]::new);
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Failed to load bins: " + ex.getMessage());
+            return;
+        }
+
+        if (binNames.length == 0) {
+            JOptionPane.showMessageDialog(this, "No bins available. Please create bins first.");
+            return;
+        }
+
+        JComboBox<String> binCombo = new JComboBox<>(binNames);
+        JPanel binPanel = new JPanel(new GridLayout(0, 1, 0, 4));
+        binPanel.add(new JLabel("Receive into Bin:"));
+        binPanel.add(binCombo);
+        if (JOptionPane.showConfirmDialog(this, binPanel, "Bin Selection", JOptionPane.OK_CANCEL_OPTION) != JOptionPane.OK_OPTION)
+            return;
+
+        String selectedBinName = (String) binCombo.getSelectedItem();
+        int binId = binLookup.getOrDefault(selectedBinName, 0);
+        if (binId == 0) {
+            JOptionPane.showMessageDialog(this, "Invalid bin selection.");
+            return;
+        }
         
         try {
-            int binId = Integer.parseInt(binIdStr.trim());
             List<ReceiptLine> receipts = new ArrayList<>();
             for (int i = 0; i < tableModel.getRowCount(); i++) {
                 int toReceive = Integer.parseInt(tableModel.getValueAt(i, 4).toString());
                 if (toReceive > 0) {
+                    String rlPName = (String) tableModel.getValueAt(i, 1);
                     ReceiptLine rl = new ReceiptLine();
-                    rl.setProductId((int) tableModel.getValueAt(i, 1));
+                    rl.setProductId(productNameToId.getOrDefault(rlPName, 0));
                     rl.setBinId(binId);
                     rl.setQuantity(toReceive);
                     receipts.add(rl);
@@ -175,7 +223,7 @@ public class ReceivingFrame extends JFrame {
             }.execute();
 
         } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "Invalid Bin Id or Quantity");
+            JOptionPane.showMessageDialog(this, "Invalid quantity value in table.");
         }
     }
 

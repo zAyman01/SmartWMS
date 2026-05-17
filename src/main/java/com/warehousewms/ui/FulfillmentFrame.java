@@ -29,8 +29,9 @@ public class FulfillmentFrame extends JFrame {
     private JLabel statusLabel;
     private BarcodeScannerPanel scannerPanel;
 
+    private final java.util.List<PickRunItem> currentItems = new java.util.ArrayList<>();
     private final DefaultTableModel tableModel = new DefaultTableModel(
-            new Object[]{"Item Id", "Order Line Id", "Bin Id", "To Pick", "Picked (Input)"}, 0) {
+            new Object[]{"ID", "Product Name", "Bin Name", "To Pick", "Picked (Input)"}, 0) {
         @Override
         public boolean isCellEditable(int row, int column) {
             return column == 4;
@@ -53,8 +54,8 @@ public class FulfillmentFrame extends JFrame {
         toolbarPanel.setBackground(ThemeConfig.BG_PRIMARY);
         titleLabel.setForeground(ThemeConfig.TEXT_PRIMARY);
         statusLabel.setForeground(ThemeConfig.TEXT_MUTED);
-        orderIdField.putClientProperty("JTextField.placeholderText", "Order ID");
-        pickRunIdField.putClientProperty("JTextField.placeholderText", "Pick Run ID");
+        orderIdField.putClientProperty("JTextField.placeholderText", "Enter Order #");
+        pickRunIdField.putClientProperty("JTextField.placeholderText", "Enter Pick Run #");
 
         ThemeConfig.styleButton(createRunButton, ThemeConfig.BG_CARD, ThemeConfig.BG_HOVER, "add");
         ThemeConfig.styleButton(completePickButton, ThemeConfig.SUCCESS, ThemeConfig.SUCCESS.brighter(), "check");
@@ -95,8 +96,10 @@ public class FulfillmentFrame extends JFrame {
                                 new com.warehousewms.config.DatabaseManager().getDataSourceWithFallback());
                 int pid = product.getProductId();
                 for (int i = 0; i < tableModel.getRowCount(); i++) {
-                    int olId = (int) tableModel.getValueAt(i, 1);
-                    com.warehousewms.model.OrderLine ol = oRepo.findOrderLineById(olId);
+                    if (i >= currentItems.size()) break;
+                    PickRunItem item = currentItems.get(i);
+                    if (item == null) continue;
+                    com.warehousewms.model.OrderLine ol = oRepo.findOrderLineById(item.getOrderLineId());
                     if (ol != null && ol.getProductId() == pid) {
                         int toPick = (int) tableModel.getValueAt(i, 3);
                         int alreadyPicked = Integer.parseInt(tableModel.getValueAt(i, 4).toString());
@@ -122,13 +125,46 @@ public class FulfillmentFrame extends JFrame {
 
     private void createPickRun() {
         String oIdStr = orderIdField.getText().trim();
-        if (oIdStr.isEmpty()) return;
+        if (oIdStr.isEmpty()) {
+            statusLabel.setText("Enter an Order # first.");
+            return;
+        }
         
         try {
             int orderId = Integer.parseInt(oIdStr);
-            String binIdStr = JOptionPane.showInputDialog(this, "Enter Bin ID to pick from:", "Bin", JOptionPane.QUESTION_MESSAGE);
-            if (binIdStr == null || binIdStr.trim().isEmpty()) return;
-            int binId = Integer.parseInt(binIdStr.trim());
+
+            // Load available bins for selection
+            java.util.Map<String, Integer> binLookup = new java.util.LinkedHashMap<>();
+            try {
+                com.warehousewms.service.BinService bs = new com.warehousewms.service.BinService(
+                        new com.warehousewms.config.DatabaseManager().getDataSourceWithFallback());
+                for (com.warehousewms.model.Bin b : bs.listAll()) {
+                    binLookup.put(b.getName(), b.getBinId());
+                }
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Failed to load bins: " + ex.getMessage());
+                return;
+            }
+
+            if (binLookup.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "No bins available. Please create bins first.");
+                return;
+            }
+
+            String[] binNameArray = binLookup.keySet().stream().sorted().toArray(String[]::new);
+            JComboBox<String> binCombo = new JComboBox<>(binNameArray);
+            JPanel binPanel = new JPanel(new java.awt.GridLayout(0, 1, 0, 4));
+            binPanel.add(new JLabel("Pick from Bin:"));
+            binPanel.add(binCombo);
+            if (JOptionPane.showConfirmDialog(this, binPanel, "Bin Selection", JOptionPane.OK_CANCEL_OPTION) != JOptionPane.OK_OPTION)
+                return;
+
+            String selectedBinName = (String) binCombo.getSelectedItem();
+            int binId = binLookup.getOrDefault(selectedBinName, 0);
+            if (binId == 0) {
+                JOptionPane.showMessageDialog(this, "Invalid bin selection.");
+                return;
+            }
 
             statusLabel.setText("Creating Pick Run...");
             new SwingWorker<Void, Void>() {
@@ -159,7 +195,7 @@ public class FulfillmentFrame extends JFrame {
                 }
             }.execute();
         } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "Invalid input");
+            JOptionPane.showMessageDialog(this, "Invalid Order #. Please enter a number.");
         }
     }
 
@@ -168,29 +204,50 @@ public class FulfillmentFrame extends JFrame {
         String prIdStr = pickRunIdField.getText().trim();
         if (prIdStr.isEmpty()) {
             // First load it
-            String loadIdStr = JOptionPane.showInputDialog(this, "Enter Pick Run ID to load:", "Load Pick Run", JOptionPane.QUESTION_MESSAGE);
+            String loadIdStr = JOptionPane.showInputDialog(this, "Enter Pick Run # to load:", "Load Pick Run", JOptionPane.QUESTION_MESSAGE);
             if (loadIdStr == null || loadIdStr.trim().isEmpty()) return;
             try {
                 int prId = Integer.parseInt(loadIdStr.trim());
                 pickRunIdField.setText(String.valueOf(prId));
                 statusLabel.setText("Loading items...");
                 new SwingWorker<List<PickRunItem>, Void>() {
+                    private java.util.Map<Integer, String> productNames = new java.util.HashMap<>();
+                    private java.util.Map<Integer, String> binNames = new java.util.HashMap<>();
+
                     @Override protected List<PickRunItem> doInBackground() throws Exception {
                         PickRunRepository repo = new PickRunRepository(new DatabaseManager().getDataSourceWithFallback());
-                        return repo.findItemsByPickRunId(prId);
+                        List<PickRunItem> items = repo.findItemsByPickRunId(prId);
+                        OrderRepository oRepo = new OrderRepository(new DatabaseManager().getDataSourceWithFallback());
+                        com.warehousewms.service.ProductService ps = new com.warehousewms.service.ProductService(new DatabaseManager().getDataSourceWithFallback());
+                        com.warehousewms.service.BinService bs = new com.warehousewms.service.BinService(new DatabaseManager().getDataSourceWithFallback());
+                        java.util.Map<Integer, com.warehousewms.model.Product> pMap = new java.util.HashMap<>();
+                        for(com.warehousewms.model.Product p : ps.listAll()) pMap.put(p.getProductId(), p);
+                        for(com.warehousewms.model.Bin b : bs.listAll()) binNames.put(b.getBinId(), b.getName());
+
+                        for (PickRunItem item : items) {
+                            com.warehousewms.model.OrderLine ol = oRepo.findOrderLineById(item.getOrderLineId());
+                            if (ol != null && pMap.containsKey(ol.getProductId())) {
+                                productNames.put(item.getPickRunItemId(), pMap.get(ol.getProductId()).getName());
+                            }
+                        }
+                        return items;
                     }
                     @Override protected void done() {
                         try {
                             List<PickRunItem> items = get();
                             tableModel.setRowCount(0);
+                            currentItems.clear();
                             for (PickRunItem it : items) {
-                                tableModel.addRow(new Object[]{it.getPickRunItemId(), it.getOrderLineId(), it.getBinId(), it.getQuantityToPick(), 0});
+                                currentItems.add(it);
+                                String pName = productNames.getOrDefault(it.getPickRunItemId(), "Unknown");
+                                String bName = binNames.getOrDefault(it.getBinId(), "Unknown");
+                                tableModel.addRow(new Object[]{it.getPickRunItemId(), pName, bName, it.getQuantityToPick(), 0});
                             }
                             statusLabel.setText("Loaded " + items.size() + " items. Enter picked quantities and click Complete.");
                         } catch (Exception ex) { statusLabel.setText("Failed: " + ex.getMessage()); }
                     }
                 }.execute();
-            } catch (Exception e) { JOptionPane.showMessageDialog(this, "Invalid ID"); }
+            } catch (Exception e) { JOptionPane.showMessageDialog(this, "Invalid number"); }
             return;
         }
 
@@ -199,11 +256,12 @@ public class FulfillmentFrame extends JFrame {
             List<PickRunItem> pickedItems = new ArrayList<>();
             for (int i = 0; i < tableModel.getRowCount(); i++) {
                 int picked = Integer.parseInt(tableModel.getValueAt(i, 4).toString());
-                if (picked > 0) {
+                if (picked > 0 && i < currentItems.size()) {
+                    PickRunItem original = currentItems.get(i);
                     PickRunItem it = new PickRunItem();
-                    it.setPickRunItemId((int) tableModel.getValueAt(i, 0));
-                    it.setOrderLineId((int) tableModel.getValueAt(i, 1));
-                    it.setBinId((int) tableModel.getValueAt(i, 2));
+                    it.setPickRunItemId(original.getPickRunItemId());
+                    it.setOrderLineId(original.getOrderLineId());
+                    it.setBinId(original.getBinId());
                     it.setQuantityPicked(picked);
                     pickedItems.add(it);
                 }

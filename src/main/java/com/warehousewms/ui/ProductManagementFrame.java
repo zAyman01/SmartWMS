@@ -27,7 +27,7 @@ public class ProductManagementFrame extends JFrame {
     private JTable productTable;
     private JLabel statusLabel;
 
-    private final DefaultTableModel tableModel = new DefaultTableModel(new Object[]{"Id", "SKU", "Name", "Weight (kg)", "Volume (m\u00B3)", "Active"}, 0) {
+    private final DefaultTableModel tableModel = new DefaultTableModel(new Object[]{"ID", "SKU", "Name", "Weight (kg)", "Volume (m\u00B3)", "Active"}, 0) {
         @Override
         public boolean isCellEditable(int row, int column) {
             return false;
@@ -65,7 +65,7 @@ public class ProductManagementFrame extends JFrame {
         searchField.getDocument().addDocumentListener(new DocumentListener() {
             private void filter() {
                 String t = searchField.getText().trim();
-                sorter.setRowFilter(t.isEmpty() ? null : RowFilter.regexFilter("(?i)" + t));
+                sorter.setRowFilter(t.isEmpty() ? null : RowFilter.regexFilter("(?i)" + java.util.regex.Pattern.quote(t)));
             }
 
             @Override

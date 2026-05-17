@@ -28,13 +28,15 @@ public class PurchaseOrderManagementFrame extends JFrame {
     private JTable poTable;
     private JLabel statusLabel;
 
-    private final DefaultTableModel tableModel = new DefaultTableModel(new Object[]{"PO Id", "Supplier Id", "Date", "Status", "Notes"}, 0) {
+    private final DefaultTableModel tableModel = new DefaultTableModel(new Object[]{"ID", "Supplier Name", "Date", "Status", "Notes"}, 0) {
         @Override
         public boolean isCellEditable(int row, int column) {
             return false;
         }
     };
     private final TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(tableModel);
+    private final java.util.Map<Integer, String> supplierNames = new java.util.HashMap<>();
+    private java.util.List<PurchaseOrder> loadedPOs = new java.util.ArrayList<>();
 
     public PurchaseOrderManagementFrame() {
         setContentPane(rootPanel);
@@ -62,7 +64,7 @@ public class PurchaseOrderManagementFrame extends JFrame {
         searchField.getDocument().addDocumentListener(new DocumentListener() {
             private void filter() {
                 String t = searchField.getText().trim();
-                sorter.setRowFilter(t.isEmpty() ? null : RowFilter.regexFilter("(?i)" + t));
+                sorter.setRowFilter(t.isEmpty() ? null : RowFilter.regexFilter("(?i)" + java.util.regex.Pattern.quote(t)));
             }
 
             @Override
@@ -107,6 +109,9 @@ public class PurchaseOrderManagementFrame extends JFrame {
             @Override
             protected List<PurchaseOrder> doInBackground() throws Exception {
                 PurchaseOrderService svc = new PurchaseOrderService(new DatabaseManager().getDataSourceWithFallback());
+                com.warehousewms.service.SupplierService ss = new com.warehousewms.service.SupplierService(new DatabaseManager().getDataSourceWithFallback());
+                supplierNames.clear();
+                for(com.warehousewms.model.Supplier s : ss.listAll()) supplierNames.put(s.getSupplierId(), s.getName());
                 return svc.getAllPOs();
             }
 
@@ -114,9 +119,11 @@ public class PurchaseOrderManagementFrame extends JFrame {
             protected void done() {
                 try {
                     List<PurchaseOrder> list = get();
+                    loadedPOs = list;
                     tableModel.setRowCount(0);
                     for (PurchaseOrder po : list) {
-                        tableModel.addRow(new Object[]{po.getPoId(), po.getSupplierId(), po.getOrderDate(), po.getStatus(), po.getNotes()});
+                        String sName = supplierNames.getOrDefault(po.getSupplierId(), "Unknown");
+                        tableModel.addRow(new Object[]{po.getPoId(), sName, po.getOrderDate(), po.getStatus(), po.getNotes()});
                     }
                     statusLabel.setText("Loaded " + list.size() + " POs.");
                 } catch (Exception ex) {
@@ -183,27 +190,28 @@ public class PurchaseOrderManagementFrame extends JFrame {
         int vr = poTable.getSelectedRow();
         if (vr < 0) return null;
         int mr = poTable.convertRowIndexToModel(vr);
+        if (mr < loadedPOs.size()) return loadedPOs.get(mr);
         PurchaseOrder po = new PurchaseOrder();
-        po.setPoId((int) tableModel.getValueAt(mr, 0));
-        po.setSupplierId((int) tableModel.getValueAt(mr, 1));
-        po.setOrderDate((Date) tableModel.getValueAt(mr, 2));
-        po.setStatus((String) tableModel.getValueAt(mr, 3));
-        po.setNotes((String) tableModel.getValueAt(mr, 4));
+        po.setOrderDate(new Date());
         return po;
     }
 
     private PurchaseOrder showPODialog(PurchaseOrder existing) {
-        JTextField supplierF = new JTextField(), statusF = new JTextField(), notesF = new JTextField();
+        // Build supplier name array from loaded map
+        String[] supplierNamesList = supplierNames.values().stream().sorted().toArray(String[]::new);
+        JComboBox<String> supplierCombo = new JComboBox<>(supplierNamesList);
+        JTextField statusF = new JTextField(), notesF = new JTextField();
         if (existing != null) {
-            supplierF.setText(String.valueOf(existing.getSupplierId()));
+            String existingSupName = supplierNames.getOrDefault(existing.getSupplierId(), "");
+            supplierCombo.setSelectedItem(existingSupName);
             statusF.setText(existing.getStatus());
             notesF.setText(existing.getNotes());
         } else {
             statusF.setText("Open");
         }
         JPanel p = new JPanel(new GridLayout(0, 1, 0, 4));
-        p.add(new JLabel("Supplier Id"));
-        p.add(supplierF);
+        p.add(new JLabel("Supplier"));
+        p.add(supplierCombo);
         p.add(new JLabel("Status"));
         p.add(statusF);
         p.add(new JLabel("Notes"));
@@ -212,8 +220,25 @@ public class PurchaseOrderManagementFrame extends JFrame {
             return null;
 
         try {
+            String selectedSupName = (String) supplierCombo.getSelectedItem();
+            if (selectedSupName == null || selectedSupName.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Please select a supplier.");
+                return null;
+            }
+            // Reverse lookup: find supplier ID from name
+            int supId = 0;
+            for (var entry : supplierNames.entrySet()) {
+                if (entry.getValue().equals(selectedSupName)) {
+                    supId = entry.getKey();
+                    break;
+                }
+            }
+            if (supId == 0) {
+                JOptionPane.showMessageDialog(this, "Supplier not found. Please create the supplier first.");
+                return null;
+            }
             PurchaseOrder po = existing != null ? existing : new PurchaseOrder();
-            po.setSupplierId(Integer.parseInt(supplierF.getText().trim()));
+            po.setSupplierId(supId);
             po.setStatus(statusF.getText().trim());
             po.setNotes(notesF.getText().trim());
             if (existing == null) po.setOrderDate(new Date());

@@ -29,13 +29,17 @@ public class InventoryManagementFrame extends JFrame {
     private JLabel statusLabel;
     private BarcodeScannerPanel scannerPanel;
 
-    private final DefaultTableModel tableModel = new DefaultTableModel(new Object[]{"Inventory Id", "Product Id", "Bin Id", "Quantity"}, 0) {
+    private final DefaultTableModel tableModel = new DefaultTableModel(new Object[]{"ID", "Product Name", "Bin Name", "Quantity"}, 0) {
         @Override
         public boolean isCellEditable(int row, int column) {
             return false;
         }
     };
     private final TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(tableModel);
+    private final java.util.Map<Integer, String> productNames = new java.util.HashMap<>();
+    private final java.util.Map<Integer, String> binNames = new java.util.HashMap<>();
+    private final java.util.Map<String, Integer> productNameToId = new java.util.HashMap<>();
+    private final java.util.Map<String, Integer> binNameToId = new java.util.HashMap<>();
 
     public InventoryManagementFrame() {
         setContentPane(rootPanel);
@@ -64,7 +68,7 @@ public class InventoryManagementFrame extends JFrame {
         searchField.getDocument().addDocumentListener(new DocumentListener() {
             private void filter() {
                 String t = searchField.getText().trim();
-                sorter.setRowFilter(t.isEmpty() ? null : RowFilter.regexFilter("(?i)" + t));
+                sorter.setRowFilter(t.isEmpty() ? null : RowFilter.regexFilter("(?i)" + java.util.regex.Pattern.quote(t)));
             }
 
             @Override
@@ -103,8 +107,8 @@ public class InventoryManagementFrame extends JFrame {
     }
 
     private void onBarcodeScan(com.warehousewms.model.Product product) {
-        searchField.setText(String.valueOf(product.getProductId()));
-        statusLabel.setText("Scanned: " + product.getSku() + " \u2013 " + product.getName());
+        searchField.setText(product.getSku());
+        statusLabel.setText("Scanned: " + product.getName());
     }
 
     
@@ -115,6 +119,20 @@ public class InventoryManagementFrame extends JFrame {
             @Override
             protected List<Inventory> doInBackground() throws Exception {
                 InventoryService svc = new InventoryService(new DatabaseManager().getDataSourceWithFallback());
+                com.warehousewms.service.ProductService ps = new com.warehousewms.service.ProductService(new DatabaseManager().getDataSourceWithFallback());
+                com.warehousewms.service.BinService bs = new com.warehousewms.service.BinService(new DatabaseManager().getDataSourceWithFallback());
+                productNames.clear();
+                binNames.clear();
+                productNameToId.clear();
+                binNameToId.clear();
+                for(com.warehousewms.model.Product p : ps.listAll()) {
+                    productNames.put(p.getProductId(), p.getName());
+                    productNameToId.put(p.getName(), p.getProductId());
+                }
+                for(com.warehousewms.model.Bin b : bs.listAll()) {
+                    binNames.put(b.getBinId(), b.getName());
+                    binNameToId.put(b.getName(), b.getBinId());
+                }
                 return svc.getAllInventory();
             }
 
@@ -124,7 +142,9 @@ public class InventoryManagementFrame extends JFrame {
                     List<Inventory> list = get();
                     tableModel.setRowCount(0);
                     for (Inventory inv : list) {
-                        tableModel.addRow(new Object[]{inv.getInventoryId(), inv.getProductId(), inv.getBinId(), inv.getQuantity()});
+                        String pName = productNames.getOrDefault(inv.getProductId(), "Unknown");
+                        String bName = binNames.getOrDefault(inv.getBinId(), "Unknown");
+                        tableModel.addRow(new Object[]{inv.getInventoryId(), pName, bName, inv.getQuantity()});
                     }
                     statusLabel.setText("Loaded " + list.size() + " inventory records.");
                 } catch (Exception ex) {
@@ -141,10 +161,12 @@ public class InventoryManagementFrame extends JFrame {
             return;
         }
         int mr = inventoryTable.convertRowIndexToModel(vr);
-        int pId = (int) tableModel.getValueAt(mr, 1);
-        int bId = (int) tableModel.getValueAt(mr, 2);
+        String pName = (String) tableModel.getValueAt(mr, 1);
+        String bName = (String) tableModel.getValueAt(mr, 2);
+        int pId = productNameToId.getOrDefault(pName, 0);
+        int bId = binNameToId.getOrDefault(bName, 0);
 
-        String qtyStr = JOptionPane.showInputDialog(this, "Enter quantity delta (e.g., -5 or 10):", "Adjust Stock", JOptionPane.QUESTION_MESSAGE);
+        String qtyStr = JOptionPane.showInputDialog(this, "Enter quantity delta (e.g., -5 or 10):", "Adjust Stock: " + pName + " @ " + bName, JOptionPane.QUESTION_MESSAGE);
         if (qtyStr == null || qtyStr.trim().isEmpty()) return;
 
         try {
@@ -181,14 +203,34 @@ public class InventoryManagementFrame extends JFrame {
             return;
         }
         int mr = inventoryTable.convertRowIndexToModel(vr);
-        int pId = (int) tableModel.getValueAt(mr, 1);
-        int fromBId = (int) tableModel.getValueAt(mr, 2);
+        String pName = (String) tableModel.getValueAt(mr, 1);
+        String fromBName = (String) tableModel.getValueAt(mr, 2);
+        int pId = productNameToId.getOrDefault(pName, 0);
+        int fromBId = binNameToId.getOrDefault(fromBName, 0);
+        int currentQty = (int) tableModel.getValueAt(mr, 3);
 
-        JTextField toBinF = new JTextField();
+        if (binNameToId.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "No bins available for transfer.");
+            return;
+        }
+
+        // Build a combo box with all bin names except the current one
+        String[] availableBins = binNameToId.keySet().stream()
+                .filter(name -> !name.equals(fromBName))
+                .sorted()
+                .toArray(String[]::new);
+
+        if (availableBins.length == 0) {
+            JOptionPane.showMessageDialog(this, "No other bins available for transfer.");
+            return;
+        }
+
+        JComboBox<String> toBinCombo = new JComboBox<>(availableBins);
         JTextField qtyF = new JTextField();
         JPanel p = new JPanel(new GridLayout(0, 1));
-        p.add(new JLabel("To Bin Id:"));
-        p.add(toBinF);
+        p.add(new JLabel("From: " + pName + " @ " + fromBName + " (Qty: " + currentQty + ")"));
+        p.add(new JLabel("To Bin:"));
+        p.add(toBinCombo);
         p.add(new JLabel("Quantity to Transfer:"));
         p.add(qtyF);
 
@@ -196,8 +238,22 @@ public class InventoryManagementFrame extends JFrame {
             return;
 
         try {
-            int toBinId = Integer.parseInt(toBinF.getText().trim());
             int qty = Integer.parseInt(qtyF.getText().trim());
+            if (qty <= 0) {
+                JOptionPane.showMessageDialog(this, "Quantity must be greater than zero.");
+                return;
+            }
+            if (qty > currentQty) {
+                JOptionPane.showMessageDialog(this, "Cannot transfer more than available stock (" + currentQty + ").");
+                return;
+            }
+            String selectedBinName = (String) toBinCombo.getSelectedItem();
+            int toBinId = binNameToId.getOrDefault(selectedBinName, 0);
+            if (toBinId == 0) {
+                JOptionPane.showMessageDialog(this, "Invalid destination bin.");
+                return;
+            }
+
             new SwingWorker<Void, Void>() {
                 @Override
                 protected Void doInBackground() throws Exception {
@@ -211,7 +267,7 @@ public class InventoryManagementFrame extends JFrame {
                 protected void done() {
                     try {
                         get();
-                        statusLabel.setText("Stock transferred.");
+                        statusLabel.setText("Stock transferred successfully.");
                         loadInventory();
                     } catch (Exception ex) {
                         statusLabel.setText("Failed: " + ex.getMessage());
@@ -219,7 +275,7 @@ public class InventoryManagementFrame extends JFrame {
                 }
             }.execute();
         } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Invalid input.");
+            JOptionPane.showMessageDialog(this, "Please enter a valid number for quantity.");
         }
     }
 

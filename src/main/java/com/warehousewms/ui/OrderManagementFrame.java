@@ -28,13 +28,15 @@ public class OrderManagementFrame extends JFrame {
     private JTable orderTable;
     private JLabel statusLabel;
 
-    private final DefaultTableModel tableModel = new DefaultTableModel(new Object[]{"Order Id", "Customer Id", "Date", "Status", "Notes"}, 0) {
+    private final DefaultTableModel tableModel = new DefaultTableModel(new Object[]{"ID", "Customer Name", "Date", "Status", "Notes"}, 0) {
         @Override
         public boolean isCellEditable(int row, int column) {
             return false;
         }
     };
     private final TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(tableModel);
+    private final java.util.Map<Integer, String> customerNames = new java.util.HashMap<>();
+    private java.util.List<Order> loadedOrders = new java.util.ArrayList<>();
 
     public OrderManagementFrame() {
         setContentPane(rootPanel);
@@ -62,7 +64,7 @@ public class OrderManagementFrame extends JFrame {
         searchField.getDocument().addDocumentListener(new DocumentListener() {
             private void filter() {
                 String t = searchField.getText().trim();
-                sorter.setRowFilter(t.isEmpty() ? null : RowFilter.regexFilter("(?i)" + t));
+                sorter.setRowFilter(t.isEmpty() ? null : RowFilter.regexFilter("(?i)" + java.util.regex.Pattern.quote(t)));
             }
 
             @Override
@@ -107,6 +109,9 @@ public class OrderManagementFrame extends JFrame {
             @Override
             protected List<Order> doInBackground() throws Exception {
                 OrderService svc = new OrderService(new DatabaseManager().getDataSourceWithFallback());
+                com.warehousewms.service.CustomerService cs = new com.warehousewms.service.CustomerService(new DatabaseManager().getDataSourceWithFallback());
+                customerNames.clear();
+                for(com.warehousewms.model.Customer c : cs.listAll()) customerNames.put(c.getCustomerId(), c.getName());
                 return svc.getAllOrders();
             }
 
@@ -114,9 +119,11 @@ public class OrderManagementFrame extends JFrame {
             protected void done() {
                 try {
                     List<Order> list = get();
+                    loadedOrders = list;
                     tableModel.setRowCount(0);
                     for (Order o : list) {
-                        tableModel.addRow(new Object[]{o.getOrderId(), o.getCustomerId(), o.getOrderDate(), o.getStatus(), o.getNotes()});
+                        String cName = customerNames.getOrDefault(o.getCustomerId(), "Unknown");
+                        tableModel.addRow(new Object[]{o.getOrderId(), cName, o.getOrderDate(), o.getStatus(), o.getNotes()});
                     }
                     statusLabel.setText("Loaded " + list.size() + " orders.");
                 } catch (Exception ex) {
@@ -183,27 +190,28 @@ public class OrderManagementFrame extends JFrame {
         int vr = orderTable.getSelectedRow();
         if (vr < 0) return null;
         int mr = orderTable.convertRowIndexToModel(vr);
+        if (mr < loadedOrders.size()) return loadedOrders.get(mr);
         Order o = new Order();
-        o.setOrderId((int) tableModel.getValueAt(mr, 0));
-        o.setCustomerId((int) tableModel.getValueAt(mr, 1));
-        o.setOrderDate((Date) tableModel.getValueAt(mr, 2));
-        o.setStatus((String) tableModel.getValueAt(mr, 3));
-        o.setNotes((String) tableModel.getValueAt(mr, 4));
+        o.setOrderDate(new Date());
         return o;
     }
 
     private Order showOrderDialog(Order existing) {
-        JTextField custF = new JTextField(), statusF = new JTextField(), notesF = new JTextField();
+        // Build customer name array from loaded map
+        String[] customerNamesList = customerNames.values().stream().sorted().toArray(String[]::new);
+        JComboBox<String> custCombo = new JComboBox<>(customerNamesList);
+        JTextField statusF = new JTextField(), notesF = new JTextField();
         if (existing != null) {
-            custF.setText(String.valueOf(existing.getCustomerId()));
+            String existingCustName = customerNames.getOrDefault(existing.getCustomerId(), "");
+            custCombo.setSelectedItem(existingCustName);
             statusF.setText(existing.getStatus());
             notesF.setText(existing.getNotes());
         } else {
             statusF.setText("Pending");
         }
         JPanel p = new JPanel(new GridLayout(0, 1, 0, 4));
-        p.add(new JLabel("Customer Id"));
-        p.add(custF);
+        p.add(new JLabel("Customer"));
+        p.add(custCombo);
         p.add(new JLabel("Status"));
         p.add(statusF);
         p.add(new JLabel("Notes"));
@@ -212,8 +220,25 @@ public class OrderManagementFrame extends JFrame {
             return null;
 
         try {
+            String selectedCustName = (String) custCombo.getSelectedItem();
+            if (selectedCustName == null || selectedCustName.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Please select a customer.");
+                return null;
+            }
+            // Reverse lookup: find customer ID from name
+            int custId = 0;
+            for (var entry : customerNames.entrySet()) {
+                if (entry.getValue().equals(selectedCustName)) {
+                    custId = entry.getKey();
+                    break;
+                }
+            }
+            if (custId == 0) {
+                JOptionPane.showMessageDialog(this, "Customer not found. Please create the customer first.");
+                return null;
+            }
             Order o = existing != null ? existing : new Order();
-            o.setCustomerId(Integer.parseInt(custF.getText().trim()));
+            o.setCustomerId(custId);
             o.setStatus(statusF.getText().trim());
             o.setNotes(notesF.getText().trim());
             if (existing == null) o.setOrderDate(new Date());
